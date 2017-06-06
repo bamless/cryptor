@@ -3,5 +3,5 @@
 
 int main() {
 	if(delete_file("prova.txt"))
-		perr("Error");
+		perr_exit("Error");
 }

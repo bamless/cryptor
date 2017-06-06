@@ -110,8 +110,7 @@ createdirs:
 	@echo "Creating directories"
 	@mkdir -p $(dir $(OBJECTS))
 	@mkdir -p $(dir $(OBJECTS_COMPAT))
-	@mkdir -p $(BIN)/server
-	@mkdir -p $(BIN)/client
+	@mkdir -p $(BIN)
 
 # Main target, it creates the folders needed by the build and launches 'all' target
 .PHONY: server
@@ -131,18 +130,18 @@ client: createdirs
 	@echo "Build successful"
 
 .PHONY: _server
-_server: $(BIN)/server/$(SRV_EXEC_NAME)
+_server: $(BIN)/$(SRV_EXEC_NAME)
 
 # Links the object files into an executable
-$(BIN)/server/$(SRV_EXEC_NAME): $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_SERVER) $(STATICLIBS)
+$(BIN)/$(SRV_EXEC_NAME): $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_SERVER) $(STATICLIBS)
 	@echo "Linking $@..."
 	@$(CC) $(CFLAGS) $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_SERVER) $(LDFLAGS) -o $@ $(LIBS_PATH) $(LIBS)
 
 .PHONY: _client
-_client: $(BIN)/client/$(CLNT_EXEC_NAME)
+_client: $(BIN)/$(CLNT_EXEC_NAME)
 
 # Links the object files into an executable
-$(BIN)/client/$(CLNT_EXEC_NAME): $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_CLIENT) $(STATICLIBS)
+$(BIN)/$(CLNT_EXEC_NAME): $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_CLIENT) $(STATICLIBS)
 	@echo "Linking $@..."
 	@$(CC) $(CFLAGS) $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_CLIENT) $(LDFLAGS) -o $@ $(LIBS_PATH) $(LIBS)
 
