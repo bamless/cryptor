@@ -65,6 +65,10 @@ SRC_EXT = c
 
 ###### SETTINGS END ######
 
+ifeq ($(DBG),1)
+	CFLAGS += -DDEBUG
+endif
+
 # Recursive wildcard, used to get all c files in a directory recursively
 rwildcard = $(foreach d, $(wildcard $1*), $(call rwildcard,$d/,$2) \
 						$(filter $(subst *,%,$2), $d))
@@ -106,7 +110,6 @@ createdirs:
 	@echo "Creating directories"
 	@mkdir -p $(dir $(OBJECTS))
 	@mkdir -p $(dir $(OBJECTS_COMPAT))
-	@mkdir -p $(dir $(OBJECTS_COMMON))
 	@mkdir -p $(BIN)/server
 	@mkdir -p $(BIN)/client
 
