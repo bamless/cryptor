@@ -110,6 +110,7 @@ createdirs:
 	@echo "Creating directories"
 	@mkdir -p $(dir $(OBJECTS))
 	@mkdir -p $(dir $(OBJECTS_COMPAT))
+	@mkdir -p $(dir $(OBJECTS_COMMON))
 	@mkdir -p $(BIN)
 
 # Main target, it creates the folders needed by the build and launches 'all' target

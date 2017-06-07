@@ -5,14 +5,15 @@
 #include "error.h"
 #include "files.h"
 #include "logging.h"
+#include "fileUtils.h"
 
-static void recursive_read(const char *path);
+static void recursive_readz(const char *path);
 
 int main() {
- recursive_read("/home/fabrizio/HDD/Fabrizio/Pictures");
+ recursive_list("/home/fabrizio/HDD/Fabrizio/Pictures");
 }
 
-static void recursive_read(const char *path) {
+static void recursive_readz(const char *path) {
   Dir *d = open_dir(path);
   if(!d) {
     perr("error");
@@ -28,7 +29,7 @@ static void recursive_read(const char *path) {
         logs("DIR");
         char subdir_path[MAX_PATH_LENGTH];
         snprintf(subdir_path, sizeof(subdir_path)-1, "%s/%s", path, entry.name);
-        recursive_read(subdir_path);
+        recursive_readz(subdir_path);
       }
     }
   }
