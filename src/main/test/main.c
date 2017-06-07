@@ -8,5 +8,11 @@
 #include "fileUtils.h"
 
 int main() {
-	recursive_list("/home/fabrizio/HDD/Fabrizio/Pictures");
+	// Dir *d = open_dir("C:\\Games");
+	// if(!d) {
+	// 	perr("error");
+	// 	exit(-1);
+	// }
+	// close_dir(d);
+	recursive_list("D:/Fabrizio/Pictures");
 }

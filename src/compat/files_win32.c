@@ -6,29 +6,36 @@
 #include <string.h>
 #include <windows.h>
 
+static void fix_slash(char *str, int length);
+
 struct Dir{
 	HANDLE find;
-	WIN32_FIND_DATA ffd;
+	WIN32_FIND_DATAW ffd;
+	int b_first;
 };
 
 Dir* open_dir(const char *path) {
-	if(strlen(path) - 3 > MAX_PATH_LENGTH) {
+	if(strlen(path) - 7 > MAX_PATH_LENGTH) {
 		elog("Error open_dir: Path too long");
 		return NULL;
 	}
 
 	char szDir[MAX_PATH_LENGTH];
-
-	strcpy(szDir, path);
+	strcpy(szDir, "\\\\?\\");
+	strcat(szDir, path);
 	strcat(szDir, "\\*");
+	fix_slash(szDir, MAX_PATH_LENGTH);
 
-	WIN32_FIND_DATA ffd;
-	HANDLE handle_find = FindFirstFile(szDir, &ffd);
+	WCHAR wSzDir[MAX_PATH_LENGTH];
+	MultiByteToWideChar(CP_UTF8, 0, szDir, MAX_PATH_LENGTH, wSzDir, MAX_PATH_LENGTH);
+
+	WIN32_FIND_DATAW ffd;
+	HANDLE handle_find = FindFirstFileW(wSzDir, &ffd);
 	if(handle_find == INVALID_HANDLE_VALUE) {
 		return NULL;
 	}
 
-	Dir *dir = malloc(sizeof(Directory));
+	Dir *dir = malloc(sizeof(Dir));
 	if(!dir) {
 		SetLastError(ERROR_OUTOFMEMORY);
 		FindClose(handle_find);
@@ -36,7 +43,8 @@ Dir* open_dir(const char *path) {
 	}
 
 	dir->find = handle_find;
-	dir->ffd = fdd;
+	dir->ffd = ffd;
+	dir->b_first = 1;
 	return dir;
 }
 
@@ -46,6 +54,33 @@ int close_dir(Dir *dir) {
 	return ret ? 0 : GetLastError();
 }
 
+int has_next(Dir *dir) {
+	if(dir->b_first) {
+		dir->b_first = 0;
+		return 1;
+	}
+	return FindNextFileW(dir->find, &dir->ffd) ? 1 : 0;
+}
+
+void next_dir(Dir *dir, DirInfo *dir_info) {
+	WideCharToMultiByte(CP_UTF8, 0, dir->ffd.cFileName, 256, dir_info->name, 256, NULL, NULL);
+	//strncpy(dir_info->name, dir->ffd.cFileName, 255);
+	if(dir->ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+		dir_info->type = DIRECTORY;
+	} else if (dir->ffd.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) {
+		dir_info->type = NFILE;
+	} else {
+		dir_info->type = UNKNW;
+	}
+}
+
 int delete_file(const char *path) {
-	return DeleteFile((LPCTSTR) path)) ? 0 : GetLastError();
+	return DeleteFile((LPCTSTR) path) ? 0 : GetLastError();
+}
+
+static void fix_slash(char *str, int length) {
+	for(int i = 0; i < length; i++) {
+		if(str[i] == '\0') break;
+		if(str[i] == '/') str[i] = '\\';
+	}
 }

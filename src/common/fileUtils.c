@@ -8,7 +8,7 @@
 void recursive_read(const char *dir_path, void (*process_entry)(const char *, DirInfo *)) {
   Dir *dir = open_dir(dir_path);
   if(!dir) {
-    perr("error");
+    perr("error recursive_read");
     return;
   }
   DirInfo entry;

@@ -27,7 +27,7 @@ Dir* open_dir(const char *path) {
 	if(!(unix_dir = opendir(path)))
 		return NULL;
 
-	Dir *dir = malloc(sizeof(dir));
+	Dir *dir = malloc(sizeof(Dir));
 	if(!dir) {
 		out_of_memory(unix_dir);
 		return NULL;

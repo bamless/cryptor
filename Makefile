@@ -56,7 +56,7 @@ INCLUDES_CLIENT = -I$(SRC_MAIN)/client
 #Linker flags
 LDFLAGS =
 # Compiler flags
-CFLAGS = -O3 -Wall
+CFLAGS = -Wall
 # Libraries
 LIBS =
 
