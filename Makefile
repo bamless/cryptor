@@ -129,6 +129,7 @@ client: createdirs
 	@echo ""
 	@echo "Build successful"
 
+# TODO: For testing only, to be removed
 .PHONY: test
 test: createdirs
 	@echo "Beginning build..."
@@ -153,6 +154,7 @@ $(BIN)/$(CLNT_EXEC_NAME): $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_CLIENT) $(ST
 	@echo "Linking $@..."
 	@$(CC) $(CFLAGS) $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_CLIENT) $(LDFLAGS) -o $@ $(LIBS_PATH) $(LIBS)
 
+# TODO: For testing only, to be removed
 .PHONY: _test
 _test: $(BIN)/test
 
@@ -181,6 +183,8 @@ $(BUILD)/%.o: $(SRC)/%.$(SRC_EXT)
 -include $(DEPEND_COMMON)
 -include $(DEPEND_COMPAT)
 -include $(DEPEND)
+# TODO: For testing only, to be removed
+-include $(BUILD)/main/test/main.d
 
 # Removes all the build directories with obj files and executable
 .PHONY: clean
