@@ -28,7 +28,7 @@ CLNT_EXEC_NAME = client
 
 # Top level SRC folder
 SRC = src
-# Directory containing the server and client code 
+# Directory containing the server and client code
 SRC_MAIN = $(SRC)/main
 # Directory containing the win32/linux cross platform modules
 SRC_COMPAT = $(SRC)/compat
@@ -129,6 +129,14 @@ client: createdirs
 	@echo ""
 	@echo "Build successful"
 
+.PHONY: test
+test: createdirs
+	@echo "Beginning build..."
+	@echo ""
+	@make _test --no-print-directory
+	@echo ""
+	@echo "Build successful"
+
 .PHONY: _server
 _server: $(BIN)/$(SRV_EXEC_NAME)
 
@@ -145,17 +153,24 @@ $(BIN)/$(CLNT_EXEC_NAME): $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_CLIENT) $(ST
 	@echo "Linking $@..."
 	@$(CC) $(CFLAGS) $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_CLIENT) $(LDFLAGS) -o $@ $(LIBS_PATH) $(LIBS)
 
+.PHONY: _test
+_test: $(BIN)/test
+
+$(BIN)/test: $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(BUILD)/main/test/main.o $(STATICLIBS)
+	@echo "Linking $@..."
+	@$(CC) $(CFLAGS) $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(BUILD)/main/test/main.o $(LDFLAGS) -o $@ $(LIBS_PATH) $(LIBS)
+
 # Rules for the source files. It compiles source files if obj files are outdated.
 # It also creates header dependency files (.d files) used to add headers as
 # dependencies for the object files with -include later.
 $(BUILD)/main/server/%.o: $(SRC_MAIN)/server/%.$(SRC_EXT)
 	@echo "[CC] Compiling server $< -> $@"
 	@$(CC) -c $(CFLAGS) $(INCLUDES) $(INCLUDES_SERVER) -MP -MMD $< -o $@
-	
+
 $(BUILD)/main/client/%.o: $(SRC_MAIN)/client/%.$(SRC_EXT)
 	@echo "[CC] Compiling client $< -> $@"
 	@$(CC) -c $(CFLAGS) $(INCLUDES) $(INCLUDES_CLIENT) -MP -MMD $< -o $@
-	
+
 $(BUILD)/%.o: $(SRC)/%.$(SRC_EXT)
 	@echo "[CC] Compiling $< -> $@"
 	@$(CC) -c $(CFLAGS) $(INCLUDES) -MP -MMD $< -o $@
