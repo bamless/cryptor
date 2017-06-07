@@ -8,7 +8,7 @@
 #define logf(format, ...) printf(format, __VA_ARGS__)
 
 //prints a message to standard error
-#define elog(msg) fprintf(stderr, "%s\n")
+#define elog(msg) fprintf(stderr, "%s\n", msg)
 #define elogf(format, ...) fprintf(stderr, format, __VA_ARGS__)
 
 //prints a message to standard output only if DEBUG is defined
