@@ -196,12 +196,18 @@ clean:
 .PHONY: cleanServer
 cleanServer:
 	@echo "Deleting directories..."
-	@rm -rf $(BUILD)/main/server $(BIN)/main/server
+	@rm -rf $(BUILD)/main/server $(BIN)/$(SRV_EXEC_NAME)
 
 .PHONY: cleanClient
 cleanClient:
 	@echo "Deleting directories..."
-	@rm -rf $(BUILD)/main/client $(BIN)/main/client
+	@rm -rf $(BUILD)/main/client $(BIN)/$(CLNT_EXEC_NAME)
+
+# TODO: For testing only, to be removed
+.PHONY: cleanTest
+cleanTest:
+	@echo "Deleting directories..."
+	@rm -rf $(BUILD)/main/test $(BIN)/test
 
 # Copyright (C) 2016 Fabrizio Pietrucci
 
