@@ -47,6 +47,7 @@ Dir* open_dir(const char *path) {
 
 int close_dir(Dir *dir) {
 	int ret = closedir(dir->dir);
+	free(dir->prev_entry);
 	free(dir);
 	return ret;
 }
