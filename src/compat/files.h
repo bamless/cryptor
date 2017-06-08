@@ -1,5 +1,5 @@
-#ifndef FILES_H
-#define FILES_H
+#ifndef NFILES_H
+#define NFILES_H
 
 #define MAX_PATH_LENGTH 1024
 
@@ -8,25 +8,25 @@
  * logic and provides a unified interface. For concrete implementation see
  * files_*plaform*.c
  */
-typedef struct Dir Dir;
+typedef struct Dir Dir; //opaque type
 
 /*Enum for the different file types a directory can hold*/
 typedef enum FileType {
   NFILE, DIRECTORY, UNKNW
 } FileType;
 /*Struct holding a directory entry info*/
-typedef struct DirInfo {
+typedef struct DirEntry {
   FileType type;
   char name[256];
-} DirInfo;
+} DirEntry;
 
 /*Opens a directory at path "path"*/
 Dir* open_dir(const char *path);
 int close_dir(Dir *dir);
 /*Returns 1 if the Dir object has a next element*/
 int has_next(Dir *dir);
-/*Fills the DirInfo struct with info of next element in Dir*/
-void next_dir(Dir *dir, DirInfo *dir_info);
+/*Fills the DirEntry struct with info of next element in Dir*/
+void next_dir(Dir *dir, DirEntry *entry);
 
 // End directory API
 

@@ -57,7 +57,7 @@ int has_next(Dir *dir) {
 	return dir->dir_entry ? 1 : 0;
 }
 
-void next_dir(Dir *dir, DirInfo *dir_info) {
+void next_dir(Dir *dir, DirEntry *entry) {
 	if(dir->dir_entry == NULL) {
 		elog("Error: has_next must be called at least once befor next_dir");
 		return;
@@ -66,16 +66,16 @@ void next_dir(Dir *dir, DirInfo *dir_info) {
 	struct dirent *unix_dirent = dir->dir_entry;
 	switch (unix_dirent->d_type) {
 		case DT_REG:
-			dir_info->type = NFILE;
+			entry->type = NFILE;
 			break;
 		case DT_DIR:
-			dir_info->type = DIRECTORY;
+			entry->type = DIRECTORY;
 			break;
 		default:
-			dir_info->type = UNKNW;
+			entry->type = UNKNW;
 			break;
 	}
-	strncpy(dir_info->name, unix_dirent->d_name, 255);
+	strncpy(entry->name, unix_dirent->d_name, 255);
 }
 
 int delete_file(const char *path) {

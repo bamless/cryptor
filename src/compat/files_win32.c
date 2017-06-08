@@ -8,7 +8,7 @@
 
 static void fix_slash(char *str, int length);
 
-struct Dir{
+struct Dir {
 	HANDLE find;
 	WIN32_FIND_DATAW ffd;
 	int b_first;
@@ -62,18 +62,18 @@ int has_next(Dir *dir) {
 	return FindNextFileW(dir->find, &dir->ffd) ? 1 : 0;
 }
 
-void next_dir(Dir *dir, DirInfo *dir_info) {
+void next_dir(Dir *dir, DirEntry *entry) {
 	if(dir->b_first) {
 		elog("Error: has_next must be called at least once befor next_dir");
 		return;
 	}
-	WideCharToMultiByte(CP_UTF8, 0, dir->ffd.cFileName, 256, dir_info->name, 256, NULL, NULL);
-	if(dir->ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-		dir_info->type = DIRECTORY;
-	} else if (dir->ffd.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) {
-		dir_info->type = NFILE;
+	WideCharToMultiByte(CP_UTF8, 0, dir->ffd.cFileName, 256, entry->name, 256, NULL, NULL);
+	if(dir->ffd.dwFileAttributes & NFILE_ATTRIBUTE_DIRECTORY) {
+		entry->type = DIRECTORY;
+	} else if (dir->ffd.dwFileAttributes & NFILE_ATTRIBUTE_NORMAL) {
+		entry->type = NFILE;
 	} else {
-		dir_info->type = UNKNW;
+		entry->type = UNKNW;
 	}
 }
 
