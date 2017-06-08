@@ -8,5 +8,5 @@
 #include "fileUtils.h"
 
 int main() {
-	recursive_list("D:/Fabrizio/Pictures");
+	recursive_list("/mnt/HDD/Fabrizio/Pictures");
 }
