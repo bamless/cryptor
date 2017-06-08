@@ -63,6 +63,10 @@ int has_next(Dir *dir) {
 }
 
 void next_dir(Dir *dir, DirInfo *dir_info) {
+	if(dir->b_first) {
+		elog("Error: has_next must be called at least once befor next_dir");
+		return;
+	}
 	WideCharToMultiByte(CP_UTF8, 0, dir->ffd.cFileName, 256, dir_info->name, 256, NULL, NULL);
 	if(dir->ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 		dir_info->type = DIRECTORY;
