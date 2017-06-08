@@ -68,9 +68,9 @@ void next_dir(Dir *dir, DirEntry *entry) {
 		return;
 	}
 	WideCharToMultiByte(CP_UTF8, 0, dir->ffd.cFileName, 256, entry->name, 256, NULL, NULL);
-	if(dir->ffd.dwFileAttributes & NFILE_ATTRIBUTE_DIRECTORY) {
+	if(dir->ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 		entry->type = DIRECTORY;
-	} else if (dir->ffd.dwFileAttributes & NFILE_ATTRIBUTE_NORMAL) {
+	} else if (dir->ffd.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) {
 		entry->type = NFILE;
 	} else {
 		entry->type = UNKNW;
