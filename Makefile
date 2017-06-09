@@ -69,6 +69,10 @@ ifeq ($(DBG),1)
 	CFLAGS += -DDEBUG
 endif
 
+ifeq ($(PLATFORM),linux)
+	CFLAGS += -pthread
+endif
+
 # Recursive wildcard, used to get all c files in a directory recursively
 rwildcard = $(foreach d, $(wildcard $1*), $(call rwildcard,$d/,$2) \
 						$(filter $(subst *,%,$2), $d))
