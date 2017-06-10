@@ -28,7 +28,7 @@ int main() {
 	char *names[NUM_THREADS];
 	for(int i = 0; i < NUM_THREADS; i++) {
 		names[i] = malloc(sizeof(char) * 12);
-		snprintf(names[i], 11, "Thread %d", i);
+		snprintf(names[i], 12, "Thread %d", i);
 		threads[i] = thread_create(&start_func, names[i]);
 	}
 

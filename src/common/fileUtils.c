@@ -18,7 +18,7 @@ void recursive_explore(const char *dir_path, void (*process_entry)(const char *,
             process_entry(dir_path, &entry);
             if(entry.type == DIRECTORY) {
                 char subdir_path[MAX_PATH_LENGTH];
-                snprintf(subdir_path, sizeof(subdir_path)-1, "%s/%s", dir_path, entry.name);
+                snprintf(subdir_path, MAX_PATH_LENGTH, "%s/%s", dir_path, entry.name);
                 recursive_explore(subdir_path, process_entry);
             }
         }
