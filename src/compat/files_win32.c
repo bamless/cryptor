@@ -16,7 +16,7 @@ struct Dir {
 
 Dir* open_dir(const char *path) {
 	if(!(strlen(path) < 7) && strlen(path) - 7 > MAX_PATH_LENGTH) {
-		elog("Error open_dir: Path too long");
+		SetLastError(ERROR_MRM_FILEPATH_TOO_LONG);
 		return NULL;
 	}
 

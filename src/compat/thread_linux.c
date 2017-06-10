@@ -3,11 +3,14 @@
 
 #include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
 struct Thread {
   pthread_t tid;
 };
 
+static void error_check(const char *msg, int errno);
 /**Windows and Linux take in a start function with different return type. In order
 to create a unified interface this library takes in a start func with a void return
 type and then encapsulates it in a platform-specific function with the platform's
@@ -27,13 +30,11 @@ Thread* thread_create(void (*func)(void *), void *arg) {
     fa->args = arg;
 
     int err = pthread_create(&id, NULL, &start_func_impl, fa);
-    if(err) return NULL;
+    error_check("Error: thread_create", err);
 
     Thread *thread = malloc(sizeof(Thread));
-    if(!thread) {
-        elog("Error: thread_create: out of memory");
-        return NULL;
-    }
+    if(!thread) error_check("Error: thread_create", ENOMEM);
+
     thread->tid = id;
     return thread;
 }
@@ -42,8 +43,9 @@ void thread_free(Thread *thread) {
     free(thread);
 }
 
-int thread_join(Thread *thread) {
-    return pthread_join(thread->tid, NULL);
+void thread_join(Thread *thread) {
+    int err = pthread_join(thread->tid, NULL);
+    error_check("Error: thread_join", err);
 }
 
 static void* start_func_impl(void *func_args) {
@@ -61,35 +63,42 @@ struct Mutex {
 
 Mutex* thread_create_mutex() {
     Mutex *m = malloc(sizeof(Mutex));
-    if(!m) {
-        elog("Error: thread_create_mutex: out of memory");
-        return NULL;
-    }
+    if(!m) error_check("Error: thread_create_mutex", ENOMEM);
 
     int err = 0;
     pthread_mutexattr_t attr;
 
-    err |= pthread_mutexattr_init(&attr);
-    err |= pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    err |= pthread_mutex_init(&m->mutex, &attr);
+    err = pthread_mutexattr_init(&attr);
+    error_check("Error: thread_create_mutex", err);
+    err = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    error_check("Error: thread_create_mutex", err);
+    err = pthread_mutex_init(&m->mutex, &attr);
+    error_check("Error: thread_create_mutex", err);
 
-    if(err) {
-        free(m);
-        return NULL;
-    }
     return m;
 }
 
-int thread_destroy_mutex(Mutex *mutex) {
+void thread_destroy_mutex(Mutex *mutex) {
     int err = pthread_mutex_destroy(&mutex->mutex);
     free(mutex);
-    return err; //TODO: create specific errors
+    error_check("Error: thread_destroy_mutex", err);
 }
 
-int thread_lock_mutex(Mutex *mutex) {
-    return pthread_mutex_lock(&mutex->mutex);
+void thread_lock_mutex(Mutex *mutex) {
+    int err =  pthread_mutex_lock(&mutex->mutex);
+    error_check("Error: thread_lock_mutex", err);
 }
 
-int thread_unlock_mutex(Mutex *mutex) {
-    return pthread_mutex_unlock(&mutex->mutex);
+void thread_unlock_mutex(Mutex *mutex) {
+    int err = pthread_mutex_unlock(&mutex->mutex);
+    error_check("Error: thread_unlock_mutex", err);
+}
+
+static void error_check(const char *msg, int errno) {
+    if(errno) {
+        char buff[256];
+        strerror_r(errno, buff, 256);
+        elogf("%s: %s\n", msg, buff);
+        exit(errno);
+    }
 }

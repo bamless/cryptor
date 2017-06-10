@@ -2,6 +2,7 @@
 #define _WIN32_WINNT 0x0600
 #include "thread.h"
 #include "logging.h"
+#include "error.h"
 
 #include <windows.h>
 #include <synchapi.h>
@@ -20,8 +21,8 @@ static DWORD WINAPI start_func_impl(void *args);
 Thread* thread_create(void (*func)(void *), void *arg) {
     Thread *thread = malloc(sizeof(Thread));
     if(!thread) {
-        elog("Error: thread_create: out of memory");
-        return NULL;
+        SetLastError(ERROR_OUTOFMEMORY);
+        exit(GetLastError());
     }
 
     struct funcargs_t *fa = malloc(sizeof(struct funcargs_t));
@@ -30,8 +31,8 @@ Thread* thread_create(void (*func)(void *), void *arg) {
 
     thread->hThread = CreateThread(NULL, 0, &start_func_impl, fa, 0, &thread->threadId);
     if(thread->hThread == INVALID_HANDLE_VALUE) {
-        free(thread);
-        return NULL;
+        perr("Error: thread_create");
+        exit(GetLastError());
     }
     return thread;
 }
@@ -50,8 +51,9 @@ void thread_free(Thread *thread) {
     free(thread);
 }
 
-int thread_join(Thread *thread) {
-    return WaitForSingleObject(thread->hThread, INFINITE) == WAIT_OBJECT_0 ? 0 : 1;
+void thread_join(Thread *thread) {
+    if(WaitForSingleObject(thread->hThread, INFINITE) == WAIT_FAILED)
+        perr("Error: thread_join");
 }
 
 // Synchronization
@@ -63,24 +65,21 @@ struct Mutex {
 Mutex* thread_create_mutex() {
     Mutex *mutex = malloc(sizeof(Mutex));
     if(!mutex) {
-        elog("Error: thread_create_mutex: out of memory");
-        return NULL;
+        SetLastError(ERROR_OUTOFMEMORY);
+        exit(GetLastError());
     }
     InitializeSRWLock(&mutex->srw_lock);
     return mutex;
 }
 
-int thread_destroy_mutex(Mutex *mutex) {
+void thread_destroy_mutex(Mutex *mutex) {
     free(mutex); //SRW Locks don't need to be destroyed
-    return 0;
 }
 
-int thread_lock_mutex(Mutex *mutex) {
+void thread_lock_mutex(Mutex *mutex) {
     AcquireSRWLockExclusive(&mutex->srw_lock);
-    return 0;
 }
 
-int thread_unlock_mutex(Mutex *mutex) {
+void thread_unlock_mutex(Mutex *mutex) {
     ReleaseSRWLockExclusive(&mutex->srw_lock);
-    return 0;
 }

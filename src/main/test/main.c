@@ -15,9 +15,9 @@ static Mutex *m;
 
 static void start_func(void *args) {
 	thread_lock_mutex(m);
-	SLEEP(25);
+	SLEEP(1000);
 	logs((char *) args);
-	recursive_list("folder");
+	//recursive_list("folder");
 	thread_unlock_mutex(m);
 }
 
@@ -40,7 +40,7 @@ int main() {
 
 	for(int i = 0; i < NUM_THREADS; i++) {
 		free(names[i]);
-		free(threads[i]);
+		thread_free(threads[i]);
 	}
 	thread_destroy_mutex(m);
 }
