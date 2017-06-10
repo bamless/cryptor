@@ -20,6 +20,12 @@ Dir* open_dir(const char *path) {
 		return NULL;
 	}
 
+	Dir *dir = malloc(sizeof(Dir));
+	if(!dir) {
+		SetLastError(ERROR_OUTOFMEMORY);
+		return NULL;
+	}
+
 	char szDir[MAX_PATH_LENGTH];
 	strcpy(szDir, "\\\\?\\");
 	strcat(szDir, path);
@@ -29,21 +35,11 @@ Dir* open_dir(const char *path) {
 	WCHAR wSzDir[MAX_PATH_LENGTH];
 	MultiByteToWideChar(CP_UTF8, 0, szDir, MAX_PATH_LENGTH, wSzDir, MAX_PATH_LENGTH);
 
-	WIN32_FIND_DATAW ffd;
-	HANDLE handle_find = FindFirstFileW(wSzDir, &ffd);
-	if(handle_find == INVALID_HANDLE_VALUE) {
+	dir->find = FindFirstFileW(wSzDir, &dir->ffd);
+	if(dir->find == INVALID_HANDLE_VALUE) {
+		free(dir);
 		return NULL;
 	}
-
-	Dir *dir = malloc(sizeof(Dir));
-	if(!dir) {
-		SetLastError(ERROR_OUTOFMEMORY);
-		FindClose(handle_find);
-		return NULL;
-	}
-
-	dir->find = handle_find;
-	dir->ffd = ffd;
 	dir->b_first = 1;
 	return dir;
 }
