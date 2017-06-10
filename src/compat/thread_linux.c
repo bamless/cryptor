@@ -99,6 +99,6 @@ static void error_check(const char *msg, int err) {
         char buff[256];
         strerror_r(errno, buff, 256);
         elogf("%s: %s\n", msg, buff);
-        exit(errno);
+        exit(err);
     }
 }
