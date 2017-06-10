@@ -10,7 +10,7 @@ struct Thread {
   pthread_t tid;
 };
 
-static void error_check(const char *msg, int errno);
+static void error_check(const char *msg, int err);
 /**Windows and Linux take in a start function with different return type. In order
 to create a unified interface this library takes in a start func with a void return
 type and then encapsulates it in a platform-specific function with the platform's
@@ -94,8 +94,8 @@ void thread_unlock_mutex(Mutex *mutex) {
     error_check("Error: thread_unlock_mutex", err);
 }
 
-static void error_check(const char *msg, int errno) {
-    if(errno) {
+static void error_check(const char *msg, int err) {
+    if(err) {
         char buff[256];
         strerror_r(errno, buff, 256);
         elogf("%s: %s\n", msg, buff);

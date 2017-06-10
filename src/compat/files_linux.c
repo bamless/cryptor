@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <stddef.h>
 
+static void out_of_memory(DIR *unix_dir);
+
 struct Dir {
 	DIR *dir;
 	struct dirent *prev_entry;
@@ -17,17 +19,17 @@ struct Dir {
 
 Dir* open_dir(const char *path) {
 	if(!(strlen(path) < 1) && strlen(path) - 1 > MAX_PATH_LENGTH) {
-		errno = ENAMETOOLONG;
+		elog("Error open_dir: Path too long");
 		return NULL;
 	}
 
-	DIR *unix_dir = opendir(path);
-	if(unix_dir) return NULL;
+	DIR *unix_dir;
+	if(!(unix_dir = opendir(path)))
+		return NULL;
 
 	Dir *dir = malloc(sizeof(Dir));
 	if(!dir) {
-		errno = ENOMEM;
-		closedir(unix_dir);
+		out_of_memory(unix_dir);
 		return NULL;
 	}
 
@@ -35,8 +37,7 @@ Dir* open_dir(const char *path) {
 	dir->dir = unix_dir;
 	dir->prev_entry = malloc(len_entry);
 	if(!dir->prev_entry) {
-		errno = ENOMEM;
-		closedir(unix_dir);
+		out_of_memory(unix_dir);
 		return NULL;
 	}
 	dir->dir_entry = NULL;
@@ -80,4 +81,9 @@ void next_dir(Dir *dir, DirEntry *entry) {
 
 int delete_file(const char *path) {
 	return unlink(path);
+}
+
+static void out_of_memory(DIR* unix_dir) {
+	errno = ENOMEM;
+	closedir(unix_dir);
 }
