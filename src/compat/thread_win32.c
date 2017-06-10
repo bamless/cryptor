@@ -22,7 +22,7 @@ Thread* thread_create(void (*func)(void *), void *arg) {
     Thread *thread = malloc(sizeof(Thread));
     if(!thread) {
         SetLastError(ERROR_OUTOFMEMORY);
-        exit(GetLastError());
+        exit(1);
     }
 
     struct funcargs_t *fa = malloc(sizeof(struct funcargs_t));
@@ -32,7 +32,7 @@ Thread* thread_create(void (*func)(void *), void *arg) {
     thread->hThread = CreateThread(NULL, 0, &start_func_impl, fa, 0, &thread->threadId);
     if(thread->hThread == INVALID_HANDLE_VALUE) {
         perr("Error: thread_create");
-        exit(GetLastError());
+        exit(1);
     }
     return thread;
 }
@@ -66,7 +66,7 @@ Mutex* thread_create_mutex() {
     Mutex *mutex = malloc(sizeof(Mutex));
     if(!mutex) {
         SetLastError(ERROR_OUTOFMEMORY);
-        exit(GetLastError());
+        exit(1);
     }
     InitializeSRWLock(&mutex->srw_lock);
     return mutex;
