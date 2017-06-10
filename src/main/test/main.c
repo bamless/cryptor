@@ -9,26 +9,38 @@
 #include "thread.h"
 #include "utilsCompat.h"
 
+#define NUM_THREADS 20
+
 static Mutex *m;
 
 static void start_func(void *args) {
 	thread_lock_mutex(m);
-	SLEEP(2000);
-	logs((const char *) args);
+	SLEEP(25);
+	logs((char *) args);
+	recursive_list("folder");
 	thread_unlock_mutex(m);
 }
 
 int main() {
 	m = thread_create_mutex();
-	Thread *t1 = thread_create(&start_func, "Thread 1");
-	Thread *t2 = thread_create(&start_func, "Thread 2");
-	
+
+	Thread *threads[NUM_THREADS];
+	char *names[NUM_THREADS];
+	for(int i = 0; i < NUM_THREADS; i++) {
+		names[i] = malloc(sizeof(char) * 12);
+		snprintf(names[i], 11, "Thread %d", i);
+		threads[i] = thread_create(&start_func, names[i]);
+	}
+
 	logs("before");
-	thread_join(t1);
-	thread_join(t2);
+	for(int i = 0; i < NUM_THREADS; i++) {
+		thread_join(threads[i]);
+	}
 	logs("after");
 
-	thread_free(t1);
-	thread_free(t2);
+	for(int i = 0; i < NUM_THREADS; i++) {
+		free(names[i]);
+		free(threads[i]);
+	}
 	thread_destroy_mutex(m);
 }
