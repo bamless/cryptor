@@ -12,7 +12,7 @@ struct Thread {
     DWORD threadId;
 };
 
-struct funcargs_t {
+struct funcargs {
     void (*func)(void *);
     void *args;
 };
@@ -25,7 +25,7 @@ Thread* thread_create(void (*func)(void *), void *arg) {
         exit(1);
     }
 
-    struct funcargs_t *fa = malloc(sizeof(struct funcargs_t));
+    struct funcargs *fa = malloc(sizeof(struct funcargs));
     fa->func = func;
     fa->args = arg;
 
@@ -39,7 +39,7 @@ Thread* thread_create(void (*func)(void *), void *arg) {
 
 
 static DWORD WINAPI start_func_impl(void *func_args) {
-    struct funcargs_t *fa = (struct funcargs_t *) func_args;
+    struct funcargs *fa = (struct funcargs *) func_args;
     void (*func)(void *) = fa->func;
     void *args = fa->args;
     free(fa);
