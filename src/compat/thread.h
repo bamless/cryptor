@@ -16,4 +16,11 @@ void thread_destroy_mutex(Mutex *mutex);
 void thread_lock_mutex(Mutex *mutex);
 void thread_unlock_mutex(Mutex *mutex);
 
+typedef struct CondVar CondVar;
+
+CondVar* thread_create_cond();
+void thread_destroy_cond(CondVar *cond);
+void thread_cond_wait(CondVar *cond, Mutex *mutex);
+void thread_cond_signal_all(CondVar *cond);
+
 #endif

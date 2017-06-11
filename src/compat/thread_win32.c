@@ -39,7 +39,7 @@ Thread* thread_create(void (*func)(void *), void *arg) {
 
 
 static DWORD WINAPI start_func_impl(void *func_args) {
-    struct funcargs_t *fa = func_args;
+    struct funcargs_t *fa = (struct funcargs_t *) func_args;
     void (*func)(void *) = fa->func;
     void *args = fa->args;
     free(fa);

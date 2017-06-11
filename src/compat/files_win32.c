@@ -94,8 +94,8 @@ static void fix_slash(char *str, int length) {
 }
 
 fsize_t get_file_size(const char *path, int *err) {
-	DWORD dwFileSizeLow;
-	DWORD dwFileSizeHigh;
+	DWORD dwFileSizeLow = 0;
+	DWORD dwFileSizeHigh = 0;
 	HANDLE hFile = CreateFile(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if(hFile == INVALID_HANDLE_VALUE) {
 		set_err(err);

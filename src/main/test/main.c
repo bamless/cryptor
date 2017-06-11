@@ -9,20 +9,27 @@
 #include "thread.h"
 #include "utilsCompat.h"
 
-#define NUM_THREADS 20
+#define NUM_THREADS 6
 
+static CondVar *cv;
 static Mutex *m;
+static int jobs;
 
 static void start_func(void *args) {
 	thread_lock_mutex(m);
-	SLEEP(1000);
+	while(jobs == 0)
+		thread_cond_wait(cv, m);
+
+	jobs--;
+	SLEEP(500);
 	logs((char *) args);
-	recursive_list("test");
 	thread_unlock_mutex(m);
 }
 
 int main() {
+	cv = thread_create_cond();
 	m = thread_create_mutex();
+	jobs = 5;
 
 	Thread *threads[NUM_THREADS];
 	char *names[NUM_THREADS];
@@ -31,6 +38,12 @@ int main() {
 		snprintf(names[i], 12, "Thread %d", i);
 		threads[i] = thread_create(&start_func, names[i]);
 	}
+
+	SLEEP(5000);
+	thread_lock_mutex(m);
+	jobs++;
+	thread_cond_signal_all(cv);
+	thread_unlock_mutex(m);
 
 	logs("before");
 	for(int i = 0; i < NUM_THREADS; i++) {
@@ -43,4 +56,5 @@ int main() {
 		thread_free(threads[i]);
 	}
 	thread_destroy_mutex(m);
+	thread_destroy_cond(cv);
 }
