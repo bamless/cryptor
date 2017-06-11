@@ -52,8 +52,10 @@ void thread_free(Thread *thread) {
 }
 
 void thread_join(Thread *thread) {
-    if(WaitForSingleObject(thread->hThread, INFINITE) == WAIT_FAILED)
+    if(WaitForSingleObject(thread->hThread, INFINITE) == WAIT_FAILED) {
         perr("Error: thread_join");
+        exit(1);
+    }
 }
 
 // Synchronization
