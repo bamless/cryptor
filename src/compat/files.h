@@ -1,6 +1,16 @@
 #ifndef NFILES_H
 #define NFILES_H
 
+
+#ifdef __unix
+#include <sys/types.h>
+#define fsize_t off_t
+#endif
+#ifdef _WIN32
+#include <inttypes.h>
+#define fsize_t uint64_t
+#endif
+
 #define MAX_PATH_LENGTH 1024
 
 /**
@@ -9,6 +19,12 @@
  * files_*plaform*.c
  */
 typedef struct Dir Dir; //opaque type
+
+//portable error codes
+#define ERR_NOFILE 1
+#define ERR_ACCESS 2
+#define ERR_NOTDIR 3
+#define ERR_GENERIC 4
 
 /*Enum for the different file types a directory can hold*/
 typedef enum FileType {
@@ -21,7 +37,7 @@ typedef struct DirEntry {
 } DirEntry;
 
 /*Opens a directory at path "path"*/
-Dir* open_dir(const char *path);
+Dir* open_dir(const char *path, int *err);
 int close_dir(Dir *dir);
 /*Returns 1 if the Dir object has a next element*/
 int has_next(Dir *dir);
@@ -32,5 +48,6 @@ void next_dir(Dir *dir, DirEntry *entry);
 
 /*Deletes the file at path*/
 int delete_file(const char *path);
+fsize_t get_file_size(const char *path, int *err);
 
 #endif

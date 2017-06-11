@@ -6,7 +6,8 @@
 #include <string.h>
 
 void recursive_explore(const char *dir_path, void (*process_entry)(const char *, DirEntry *)) {
-    Dir *dir = open_dir(dir_path);
+    int err;
+    Dir *dir = open_dir(dir_path, &err);
     if(!dir) {
         perr("Error: recursive_explore");
         return;

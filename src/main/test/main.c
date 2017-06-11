@@ -17,7 +17,7 @@ static void start_func(void *args) {
 	thread_lock_mutex(m);
 	SLEEP(1000);
 	logs((char *) args);
-	recursive_list("folder");
+	recursive_list("test");
 	thread_unlock_mutex(m);
 }
 
