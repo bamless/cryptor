@@ -36,16 +36,16 @@ void thread_destroy_mutex(Mutex *mutex);
 void thread_lock_mutex(Mutex *mutex);
 void thread_unlock_mutex(Mutex *mutex);
 
-// #ifdef __unix
-// typedef pthread_cond_t CondVar;
-// #endif
-// #ifdef _WIN32
-//
-// #endif
-//
-// void thread_init_cond(CondVar *cond);
-// void thread_destroy_cond(CondVar *cond);
-// void thread_cond_wait(CondVar *cond, Mutex *mutex);
-// void thread_cond_signal_all(CondVar *cond);
+#ifdef __unix
+typedef pthread_cond_t CondVar;
+#endif
+#ifdef _WIN32
+// to implement
+#endif
+
+void thread_init_cond(CondVar *cond);
+void thread_destroy_cond(CondVar *cond);
+void thread_cond_wait(CondVar *cond, Mutex *mutex);
+void thread_cond_signal_all(CondVar *cond);
 
 #endif
