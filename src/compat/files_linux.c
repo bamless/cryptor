@@ -82,7 +82,7 @@ void next_dir(Dir *dir, DirEntry *entry) {
 			entry->type = UNKNW;
 			break;
 	}
-	strncpy(entry->name, unix_dirent->d_name, 255);
+	strncpy(entry->name, unix_dirent->d_name, 256);
 }
 
 int delete_file(const char *path) {
