@@ -1,26 +1,51 @@
 #ifndef THREAD_H
 #define THREAD_H
 
-typedef struct Thread Thread; // opaque type
+//includes
+#ifdef __unix
+#include <pthread.h>
+#endif
+#ifdef _WIN32
+#include <windows.h>
+#include <synchapi.h>
+#endif
 
-Thread* thread_create(void (*func)(void *), void *arg);
-void thread_free(Thread *thread);
+//Threads
+
+#ifdef __unix
+typedef pthread_t Thread;
+#endif
+#ifdef _WIN32
+typedef HANDLE Thread;
+#endif
+
+void thread_create(Thread *thread, void (*func)(void *), void *arg);
 void thread_join(Thread *thread);
 
 // Synchronization
 
-typedef struct Mutex Mutex; //opaque type
+#ifdef __unix
+typedef pthread_mutex_t Mutex;
+#endif
+#ifdef _WIN32
+typedef SRWLOCK Mutex;
+#endif
 
-Mutex* thread_create_mutex();
+void thread_init_mutex(Mutex *mutex);
 void thread_destroy_mutex(Mutex *mutex);
 void thread_lock_mutex(Mutex *mutex);
 void thread_unlock_mutex(Mutex *mutex);
 
-typedef struct CondVar CondVar;
-
-CondVar* thread_create_cond();
-void thread_destroy_cond(CondVar *cond);
-void thread_cond_wait(CondVar *cond, Mutex *mutex);
-void thread_cond_signal_all(CondVar *cond);
+// #ifdef __unix
+// typedef pthread_cond_t CondVar;
+// #endif
+// #ifdef _WIN32
+//
+// #endif
+//
+// void thread_init_cond(CondVar *cond);
+// void thread_destroy_cond(CondVar *cond);
+// void thread_cond_wait(CondVar *cond, Mutex *mutex);
+// void thread_cond_signal_all(CondVar *cond);
 
 #endif

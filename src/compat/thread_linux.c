@@ -6,10 +6,6 @@
 #include <string.h>
 #include <errno.h>
 
-struct Thread {
-    pthread_t tid;
-};
-
 /**Windows and Linux take in a start function with different return type. In order
 to create a unified interface this library takes in a start func with a void return
 type and then encapsulates it in a platform-specific function with the platform's
@@ -23,7 +19,7 @@ static void* start_func_impl(void *func_args);
 //pthread functions are not guaranteed to set errno, so we must obtain the error msg from the error returned
 static void error_check(const char *msg, int err);
 
-Thread* thread_create(void (*func)(void *), void *arg) {
+void thread_create(Thread *thread, void (*func)(void *), void *arg) {
     pthread_t id;
 
     struct funcargs *fa = malloc(sizeof(struct funcargs));
@@ -33,19 +29,11 @@ Thread* thread_create(void (*func)(void *), void *arg) {
     int err = pthread_create(&id, NULL, &start_func_impl, fa);
     error_check("Error: thread_create", err);
 
-    Thread *thread = malloc(sizeof(Thread));
-    if(!thread) error_check("Error: thread_create", ENOMEM);
-
-    thread->tid = id;
-    return thread;
-}
-
-void thread_free(Thread *thread) {
-    free(thread);
+    *thread = id;
 }
 
 void thread_join(Thread *thread) {
-    int err = pthread_join(thread->tid, NULL);
+    int err = pthread_join(*thread, NULL);
     error_check("Error: thread_join", err);
 }
 
@@ -59,15 +47,7 @@ static void* start_func_impl(void *func_args) {
 }
 
 //Synchronization
-
-struct Mutex {
-    pthread_mutex_t mutex;
-};
-
-Mutex* thread_create_mutex() {
-    Mutex *m = malloc(sizeof(Mutex));
-    if(!m) error_check("Error: thread_create_mutex", ENOMEM);
-
+void thread_init_mutex(Mutex *mutex) {
     int err = 0;
     pthread_mutexattr_t attr;
 
@@ -75,55 +55,42 @@ Mutex* thread_create_mutex() {
     error_check("Error: thread_create_mutex", err);
     err = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
     error_check("Error: thread_create_mutex", err);
-    err = pthread_mutex_init(&m->mutex, &attr);
+    err = pthread_mutex_init(mutex, &attr);
     error_check("Error: thread_create_mutex", err);
-
-    return m;
 }
 
 void thread_destroy_mutex(Mutex *mutex) {
-    int err = pthread_mutex_destroy(&mutex->mutex);
-    free(mutex);
+    int err = pthread_mutex_destroy(mutex);
     error_check("Error: thread_destroy_mutex", err);
 }
 
 void thread_lock_mutex(Mutex *mutex) {
-    int err =  pthread_mutex_lock(&mutex->mutex);
+    int err =  pthread_mutex_lock(mutex);
     error_check("Error: thread_lock_mutex", err);
 }
 
 void thread_unlock_mutex(Mutex *mutex) {
-    int err = pthread_mutex_unlock(&mutex->mutex);
+    int err = pthread_mutex_unlock(mutex);
     error_check("Error: thread_unlock_mutex", err);
 }
 
-
-struct CondVar {
-    pthread_cond_t cond;
-};
-
-CondVar* thread_create_cond() {
-    CondVar *cv = malloc(sizeof(CondVar));
-    if(!cv) error_check("Error: thread_create_mutex", ENOMEM);
-
-    int err = pthread_cond_init(&cv->cond, NULL);
+void thread_init_cond(CondVar *cond) {
+    int err = pthread_cond_init(cond, NULL);
     error_check("Error: thread_create_mutex", err);
-    return cv;
 }
 
 void thread_destroy_cond(CondVar *cond) {
-    int err = pthread_cond_destroy(&cond->cond);
-    free(cond);
+    int err = pthread_cond_destroy(cond);
     error_check("Error: pthread_destroy_cond", err);
 }
 
 void thread_cond_wait(CondVar *cond, Mutex *mutex) {
-    int err = pthread_cond_wait(&cond->cond, &mutex->mutex);
+    int err = pthread_cond_wait(cond, mutex);
     error_check("Error: thread_cond_wait", err);
 }
 
 void thread_cond_signal_all(CondVar *cond) {
-    int err = pthread_cond_broadcast(&cond->cond);
+    int err = pthread_cond_broadcast(cond);
     error_check("Error: thread_cond_signal_all", err);
 }
 
