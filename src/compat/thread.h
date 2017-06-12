@@ -40,7 +40,7 @@ void thread_unlock_mutex(Mutex *mutex);
 typedef pthread_cond_t CondVar;
 #endif
 #ifdef _WIN32
-// to implement
+typedef CONDITION_VARIABLE CondVar;
 #endif
 
 void thread_init_cond(CondVar *cond);

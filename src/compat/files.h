@@ -48,6 +48,8 @@ void next_dir(Dir *dir, DirEntry *entry);
 
 /*Deletes the file at path*/
 int delete_file(const char *path);
+/*Returns the size of the file at path. the value returned by this funtion is
+guaranteed to be >= 0. The actual type of fsize_t is implementation defined*/
 fsize_t get_file_size(const char *path, int *err);
 
 #endif

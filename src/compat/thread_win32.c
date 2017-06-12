@@ -59,3 +59,19 @@ void thread_lock_mutex(Mutex *mutex) {
 void thread_unlock_mutex(Mutex *mutex) {
     ReleaseSRWLockExclusive(mutex);
 }
+
+void thread_init_cond(CondVar *cond) {
+    InitializeConditionVariable(cond);
+}
+
+void thread_destroy_cond(CondVar *cond) {
+    //CV don't need to be freed in windows
+}
+
+void thread_cond_wait(CondVar *cond, Mutex *mutex) {
+    SleepConditionVariableSRW(cond, mutex, INFINITE, 0);
+}
+
+void thread_cond_signal_all(CondVar *cond) {
+    WakeAllConditionVariable(cond);
+}
