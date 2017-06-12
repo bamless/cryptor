@@ -71,6 +71,7 @@ endif
 
 ifeq ($(PLATFORM),linux)
 	CFLAGS += -pthread
+	CFLAGS += -D_FILE_OFFSET_BITS=64 #off_t 64 bit even on 32 bit machine
 endif
 
 # Recursive wildcard, used to get all c files in a directory recursively
