@@ -52,11 +52,11 @@ void thread_init_mutex(Mutex *mutex) {
     pthread_mutexattr_t attr;
 
     err = pthread_mutexattr_init(&attr);
-    error_check("Error: thread_create_mutex", err);
+    error_check("Error: thread_init_mutex", err);
     err = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    error_check("Error: thread_create_mutex", err);
+    error_check("Error: thread_init_mutex", err);
     err = pthread_mutex_init(mutex, &attr);
-    error_check("Error: thread_create_mutex", err);
+    error_check("Error: thread_init_mutex", err);
 }
 
 void thread_destroy_mutex(Mutex *mutex) {
@@ -76,7 +76,7 @@ void thread_unlock_mutex(Mutex *mutex) {
 
 void thread_init_cond(CondVar *cond) {
     int err = pthread_cond_init(cond, NULL);
-    error_check("Error: thread_create_mutex", err);
+    error_check("Error: thread_init_cond", err);
 }
 
 void thread_destroy_cond(CondVar *cond) {

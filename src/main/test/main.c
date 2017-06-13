@@ -36,7 +36,7 @@ int main() {
 	for(int i = 0; i < NUM_THREADS; i++) {
 		names[i] = malloc(sizeof(char) * 12);
 		snprintf(names[i], 12, "Thread %d", i);
-		thread_create(&threads[i], &start_func, names[i]);
+		thread_init(&threads[i], &start_func, names[i]);
 	}
 
 	SLEEP(5000);
