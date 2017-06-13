@@ -2,6 +2,8 @@
 #include "thread.h"
 #include "logging.h"
 
+#include <stdlib.h>
+
 typedef struct ThreadPoolTask {
     struct ThreadPoolTask *next;
     void (*task_func)(void *, int);
@@ -80,6 +82,14 @@ void threadpool_destroy(ThreadPool *tp, enum shutdown_type type) {
     //free all the resources
     thread_destroy_cond(&tp->tasks_cond);
     thread_destroy_mutex(&tp->tp_lock);
+    //if the shutdown type is hard we need to free the remaining tasks
+    if(type == HARD_SHUTDOWN) {
+        ThreadPoolTask *t;
+        while((t = tp->tasks_head)) {
+            tp->tasks_head = t->next;
+            free(t);
+        }
+    }
     free(tp->threads);
     free(tp);
 }
@@ -127,10 +137,13 @@ static void worker_thread(void *worker_thread_arg) {
             break;
         }
 
+        //obtain task from queue
         dlogf("%s %d %s\n", "Thread", id, "obtaining task");
         ThreadPoolTask *task = tp->tasks_head;
         tp->tasks_head = task->next;
+        if(!tp->tasks_head) tp->tasks_tail = NULL;
         tp->queue_size--;
+
         thread_unlock_mutex(&tp->tp_lock);
 
         void (*task_func)(void *, int) = task->task_func;
