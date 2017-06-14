@@ -9,8 +9,8 @@
 
 typedef int Socket;
 
-#define socket_startup() 0
-#define socket_cleanup() 0
+#define socket_startup()
+#define socket_cleanup()
 #define socket_close(sock) close(sock)
 #define is_socket_valid(sock) (sock >= 0)
 
@@ -20,8 +20,19 @@ typedef int Socket;
 
 typedef SOCKET Socket;
 
-#define socket_startup()  WSAStartup(MAKEWORD(2,2), NULL)
-#define socket_cleanup() WSACleanup()
+#define socket_startup()  do { \
+        WSADATA data; \
+        if(WSAStartup(MAKEWORD(2,2), &data)) { \
+            perr_sock("Error: socket_startup"); \
+            exit(1); \
+        } \
+    } while(0)
+#define socket_cleanup() do { \
+        if(WSACleanup()) { \
+            perr_sock("Error: socket_cleanup"); \
+            exit(1); \
+        } \
+    } while(0)
 #define socket_close(sock) closesocket(sock)
 #define is_socket_valid(sock) (sock != INVALID_SOCKET)
 #endif

@@ -1,8 +1,9 @@
 #include "error.h"
+
+#include <Winsock2.h>
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <windows.h>
-#include<winsock2.h>
 
 void perr(const char *msg) {
 	//Get the error message, if any.

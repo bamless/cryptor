@@ -1,7 +1,7 @@
+#include "socket.h"
 #include "threadpool.h"
 #include "logging.h"
 #include "utilsCompat.h"
-#include "socket.h"
 #include "error.h"
 #include "files.h"
 
@@ -25,10 +25,9 @@ int main() {
 	threadpool_add_task(tp, &thread_func, NULL);
 	threadpool_add_task(tp, &thread_func, NULL);
 	threadpool_destroy(tp, SOFT_SHUTDOWN);
-	if(socket_startup()) {
-		perr_sock("Error: sock_startup");
-		exit(1);
-	}
+
+	socket_startup();
+
 	Socket s = socket(AF_INET , SOCK_STREAM , 0);
 	if(!is_socket_valid(s)) {
 		perr_sock("error while creating socket");
@@ -38,14 +37,13 @@ int main() {
 		perr_sock("error while closing socket");
 		exit(1);
 	}
-	if(socket_cleanup()) {
-		perr_sock("error while cleaning socket");
-		exit(1);
-	}
+
+	socket_cleanup();
+
 	fsize_t fsize;
 	if(get_file_size("/home/fabrizio/socket.tgz", &fsize)) {
 		perr("Error: get_file_size");
 		exit(1);
 	}
-	printf("%ju\n", (uintmax_t) fsize);
+	printf("%"PRIuMAX"\n", (uintmax_t) fsize);
 }

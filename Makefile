@@ -65,13 +65,18 @@ SRC_EXT = c
 
 ###### SETTINGS END ######
 
+#Enable debug
 ifeq ($(DBG),1)
 	CFLAGS += -DDEBUG
 endif
 
 ifeq ($(PLATFORM),linux)
 	CFLAGS += -pthread
-	CFLAGS += -D_FILE_OFFSET_BITS=64 #off_t 64 bit even on 32 bit machine
+	CFLAGS += -D_FILE_OFFSET_BITS=64 #off_t is 64 bit even on 32 bit machine
+endif
+
+ifeq ($(PLATFORM),win32)
+	LIBS += -lws2_32 #MinGW-w64 Winsock library
 endif
 
 # Recursive wildcard, used to get all c files in a directory recursively
