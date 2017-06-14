@@ -16,7 +16,7 @@ enum shutdown_type {
  */
 ThreadPool* threadpool_create(int thread_count);
 /*
- * Destroys the threadpool. It signals all the thread to stop, joins on them
+ * Destroys the threadpool. It signals all the threads to stop, joins on them
  * and then frees all the resource associated with the threadpool.
  * @arg type The type of shutdown the thread pool will perform. @see shutdown_type
  */
