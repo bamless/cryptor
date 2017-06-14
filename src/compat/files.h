@@ -4,11 +4,11 @@
 
 #ifdef __unix
 #include <sys/types.h>
-#define fsize_t off_t
+typedef off_t fsize_t;
 #endif
 #ifdef _WIN32
 #include <inttypes.h>
-#define fsize_t uint64_t
+typedef uint64_t fsize_t;
 #endif
 
 #define MAX_PATH_LENGTH 1024

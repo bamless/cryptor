@@ -3,8 +3,10 @@
 #include "utilsCompat.h"
 #include "socket.h"
 #include "error.h"
+#include "files.h"
 
 #include <stdlib.h>
+#include <inttypes.h>
 
 #define THREADS 3
 
@@ -40,4 +42,7 @@ int main() {
 		perr_sock("error while cleaning socket");
 		exit(1);
 	}
+	int err;
+	//get_file_size is guaranteed to return a value >= 0, so we can safely cast to unsigned
+	printf("%ju\n", (uintmax_t) get_file_size("/home/fabrizio/socket.tgz", &err));
 }
