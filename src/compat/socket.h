@@ -16,7 +16,7 @@ typedef int Socket;
 
 //Windows sockets
 #elif _WIN32
-#include<winsock2.h>
+#include <winsock2.h>
 
 typedef SOCKET Socket;
 
