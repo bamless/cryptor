@@ -10,6 +10,10 @@
 #include <synchapi.h>
 #endif
 
+/*
+ * Cross platform thread library. The error checking is handled by the functions
+ */
+
 //Threads
 
 #ifdef __unix

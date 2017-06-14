@@ -13,20 +13,20 @@ typedef struct ThreadPoolTask {
 
 /*The actual threadpool struct*/
 struct ThreadPool {
-    int thread_count;           /*The number of worker threads*/
-    int queue_size;             /*The number of tasks currently in the queue*/
-    ThreadPoolTask *tasks_head; /*The queue head*/
-    ThreadPoolTask *tasks_tail; /*The queue tail*/
-    int shutting;               /*Flag indicating if the threadpool is shutting*/
-    Thread *threads;            /*Array of size thread_count containing the worker threads*/
-    Mutex tp_lock;              /*Mutex for synchronizing access*/
-    CondVar tasks_cond;         /*Condition var for signaling the thrads when a task is inserted*/
+    int thread_count;               /*The number of worker threads*/
+    int queue_size;                 /*The number of tasks currently in the queue*/
+    ThreadPoolTask *tasks_head;     /*The queue head*/
+    ThreadPoolTask *tasks_tail;     /*The queue tail*/
+    int shutting;                   /*Flag indicating if the threadpool is shutting*/
+    Thread *threads;                /*Array of size thread_count containing the worker threads*/
+    Mutex tp_lock;                  /*Mutex for synchronizing access*/
+    CondVar tasks_cond;             /*Condition var for signaling the thrads when a task is inserted*/
 };
 
 /*struct that will be passed to the working thread on creation*/
 struct wthread_arg {
-    ThreadPool *tp; /*The threadpool of the working thread*/
-    int id;         /*The id of the working thread*/
+    ThreadPool *tp;                 /*The threadpool of the working thread*/
+    int id;                         /*The id of the working thread*/
 };
 
 static void init_threads(Thread *, ThreadPool *);
@@ -99,12 +99,21 @@ void threadpool_destroy(ThreadPool *tp, enum shutdown_type type) {
 
 int threadpool_add_task(ThreadPool *tp, void (*task_func)(void *, int), void *args) {
     ThreadPoolTask *task = malloc(sizeof(ThreadPoolTask));
-    if(!task) return -1;
+    if(!task) return ERR_OUTOFMEM;
     task->next = NULL;
     task->task_func = task_func;
     task->args = args;
 
     thread_lock_mutex(&tp->tp_lock);
+
+    //if shutting return error
+    if(tp->shutting) {
+        free(task);
+        thread_unlock_mutex(&tp->tp_lock);
+        return ERR_SHUTDOWN;
+    }
+
+    //add the task to the queue
     dlog("Adding task to the thread pool queue...");
     if(tp->queue_size == 0) {
         tp->tasks_head = task;
@@ -113,6 +122,7 @@ int threadpool_add_task(ThreadPool *tp, void (*task_func)(void *, int), void *ar
     }
     tp->tasks_tail = task;
     tp->queue_size++;
+
     thread_cond_signal_all(&tp->tasks_cond);
     thread_unlock_mutex(&tp->tp_lock);
     return 0;
@@ -123,7 +133,6 @@ static void worker_thread(void *worker_thread_arg) {
 
     ThreadPool *tp = wtarg->tp;
     int id = wtarg->id;
-
     free(wtarg);
 
     for(;;) {
