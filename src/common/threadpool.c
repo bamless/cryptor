@@ -4,26 +4,29 @@
 
 #include <stdlib.h>
 
+/*A threadpool task*/
 typedef struct ThreadPoolTask {
-    struct ThreadPoolTask *next;
-    void (*task_func)(void *, int);
-    void *args;
+    struct ThreadPoolTask *next;    /*Pointer to next task*/
+    void (*task_func)(void *, int); /*The function of the task, to be executed from a worker thread*/
+    void *args;                     /*The args to be passed to the function*/
 } ThreadPoolTask;
 
+/*The actual threadpool struct*/
 struct ThreadPool {
-    int thread_count;
-    int queue_size;
-    ThreadPoolTask *tasks_head;
-    ThreadPoolTask *tasks_tail;
-    int shutting;
-    Thread *threads;
-    Mutex tp_lock;
-    CondVar tasks_cond;
+    int thread_count;           /*The number of worker threads*/
+    int queue_size;             /*The number of tasks currently in the queue*/
+    ThreadPoolTask *tasks_head; /*The queue head*/
+    ThreadPoolTask *tasks_tail; /*The queue tail*/
+    int shutting;               /*Flag indicating if the threadpool is shutting*/
+    Thread *threads;            /*Array of size thread_count containing the worker threads*/
+    Mutex tp_lock;              /*Mutex for synchronizing access*/
+    CondVar tasks_cond;         /*Condition var for signaling the thrads when a task is inserted*/
 };
 
+/*struct that will be passed to the working thread on creation*/
 struct wthread_arg {
-    ThreadPool *tp;
-    int id;
+    ThreadPool *tp; /*The threadpool of the working thread*/
+    int id;         /*The id of the working thread*/
 };
 
 static void init_threads(Thread *, ThreadPool *);
