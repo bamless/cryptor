@@ -16,6 +16,7 @@ struct Dir {
 };
 
 Dir* open_dir(const char *path, int *err) {
+	*err = 0;
 	if(!(strlen(path) < 7) && strlen(path) - 7 > MAX_PATH_LENGTH) {
 		SetLastError(ERROR_MRM_FILEPATH_TOO_LONG);
 		set_err(err);
@@ -93,18 +94,19 @@ static void fix_slash(char *str, int length) {
 	}
 }
 
-fsize_t get_file_size(const char *path, int *err) {
+int get_file_size(const char *path, fsize_t *fsize) {
+	int err = 0;
 	DWORD dwFileSizeLow = 0;
 	DWORD dwFileSizeHigh = 0;
 	HANDLE hFile = CreateFile(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if(hFile == INVALID_HANDLE_VALUE) {
-		set_err(err);
-		return 0;
+		set_err(&err);
+		return err;
 	}
 
 	dwFileSizeLow = GetFileSize(hFile, &dwFileSizeHigh);
- 	fsize_t fullSize = (((fsize_t) dwFileSizeHigh) << 32) | dwFileSizeLow;
-	return fullSize;
+ 	*fsize = (((fsize_t) dwFileSizeHigh) << 32) | dwFileSizeLow;
+	return 0;
 }
 
 static void set_err(int *err) {

@@ -36,20 +36,22 @@ typedef struct DirEntry {
   char name[256];
 } DirEntry;
 
-/*Opens a directory at path "path"*/
+/*Opens a directory at path "path. If fails it returns NULL and err is set to the appropriate error code"*/
 Dir* open_dir(const char *path, int *err);
+/*Closes Dir. returns 0 on success, nonzero if it fails*/
 int close_dir(Dir *dir);
-/*Returns 1 if the Dir object has a next element*/
+/*Returns 1 if the Dir object has a next element, 0 otherwise*/
 int has_next(Dir *dir);
 /*Fills the DirEntry struct with info of next element in Dir*/
 void next_dir(Dir *dir, DirEntry *entry);
 
 // End directory API
 
-/*Deletes the file at path*/
+/*Deletes the file at path. Returns 0 on success, nonzero on failure*/
 int delete_file(const char *path);
-/*Returns the size of the file at path. the value returned by this funtion is
-guaranteed to be >= 0. The actual type of fsize_t is implementation defined*/
-fsize_t get_file_size(const char *path, int *err);
+/*Returns the size of the file at path. the value returned by this funtion in fsize
+is guaranteed to be >= 0. The actual type of fsize_t is implementation defined.
+@return 0 on success and fsize is set to the file size. non 0 error code on failure*/
+int get_file_size(const char *path, fsize_t *fsize);
 
 #endif

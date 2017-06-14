@@ -21,6 +21,7 @@ struct Dir {
 };
 
 Dir* open_dir(const char *path, int *err) {
+	*err = 0;
 	if(!(strlen(path) < 1) && strlen(path) - 1 > MAX_PATH_LENGTH) {
 		elog("Error open_dir: Path too long");
 		return NULL;
@@ -99,13 +100,14 @@ static void out_of_memory(DIR* unix_dir) {
 	closedir(unix_dir);
 }
 
-fsize_t get_file_size(const char *path, int *err) {
-	struct stat file_stat; *err = 0;
+int get_file_size(const char *path, fsize_t *fsize) {
+	struct stat file_stat; int err = 0;
 	if(stat(path, &file_stat)) {
-		set_err(err);
-		return 0;
+		set_err(&err);
+		return err;
 	}
-	return file_stat.st_size;
+	*fsize = file_stat.st_size;
+	return 0;
 }
 
 static void set_err(int *err) {

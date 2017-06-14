@@ -42,8 +42,10 @@ int main() {
 		perr_sock("error while cleaning socket");
 		exit(1);
 	}
-	int err;
-	//get_file_size is guaranteed to return a value >= 0, so we can safely cast to unsigned
-	printf("%ju\n", (uintmax_t) get_file_size("/home/fabrizio/socket.tgz", &err));
-	if(err) perr("Error: get_file_size");
+	fsize_t fsize;
+	if(get_file_size("/home/fabrizio/socket.tgz", &fsize)) {
+		perr("Error: get_file_size");
+		exit(1);
+	}
+	printf("%ju\n", (uintmax_t) fsize);
 }
