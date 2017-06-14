@@ -24,7 +24,7 @@ int main() {
 	threadpool_add_task(tp, &thread_func, NULL);
 	threadpool_add_task(tp, &thread_func, NULL);
 	threadpool_add_task(tp, &thread_func, NULL);
-	threadpool_destroy(tp, HARD_SHUTDOWN);
+	threadpool_destroy(tp, SOFT_SHUTDOWN);
 	if(socket_startup()) {
 		perr_sock("Error: sock_startup");
 		exit(1);
