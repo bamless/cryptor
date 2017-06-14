@@ -45,4 +45,5 @@ int main() {
 	int err;
 	//get_file_size is guaranteed to return a value >= 0, so we can safely cast to unsigned
 	printf("%ju\n", (uintmax_t) get_file_size("/home/fabrizio/socket.tgz", &err));
+	if(err) perr("Error: get_file_size");
 }
