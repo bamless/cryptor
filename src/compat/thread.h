@@ -4,8 +4,7 @@
 //includes
 #ifdef __unix
 #include <pthread.h>
-#endif
-#ifdef _WIN32
+#elif _WIN32
 #include <windows.h>
 #include <synchapi.h>
 #endif
@@ -18,8 +17,7 @@
 
 #ifdef __unix
 typedef pthread_t Thread;
-#endif
-#ifdef _WIN32
+#elif _WIN32
 typedef HANDLE Thread;
 #endif
 
@@ -30,8 +28,7 @@ void thread_join(Thread *thread);
 
 #ifdef __unix
 typedef pthread_mutex_t Mutex;
-#endif
-#ifdef _WIN32
+#elif _WIN32
 typedef SRWLOCK Mutex;
 #endif
 
@@ -42,8 +39,7 @@ void thread_unlock_mutex(Mutex *mutex);
 
 #ifdef __unix
 typedef pthread_cond_t CondVar;
-#endif
-#ifdef _WIN32
+#elif _WIN32
 typedef CONDITION_VARIABLE CondVar;
 #endif
 

@@ -59,7 +59,7 @@ static void init_threads(Thread *threads, ThreadPool *tp) {
         struct wthread_arg *wtarg = malloc(sizeof(struct wthread_arg));
         wtarg->tp = tp;
         wtarg->id = i;
-        dlogf("%s %d\n", "Initializing thread", i);
+        dlogf("Initializing thread %d\n", i);
         thread_create(&threads[i], &worker_thread, wtarg);
     }
     thread_unlock_mutex(&tp->tp_lock);
@@ -139,18 +139,18 @@ static void worker_thread(void *worker_thread_arg) {
         thread_lock_mutex(&tp->tp_lock);
         //if the queue is empty wait on cv
         while((tp->queue_size == 0) && !(tp->shutting)) {
-            dlogf("%s %d %s\n", "Thread", id, "waiting for tasks");
+            dlogf("Thread %d is waiting for tasks\n", id);
             thread_cond_wait(&tp->tasks_cond, &tp->tp_lock);
         }
 
         if(tp->shutting == HARD_SHUTDOWN || (tp->shutting == SOFT_SHUTDOWN && tp->queue_size == 0)) {
-            dlogf("%s %d %s\n", "Thread", id, "shutting...");
+            dlogf("Thread %d is shutting...\n", id);
             thread_unlock_mutex(&tp->tp_lock);
             break;
         }
 
         //obtain task from queue
-        dlogf("%s %d %s\n", "Thread", id, "obtaining task");
+        dlogf("Thread %d is obtaining task\n", id);
         ThreadPoolTask *task = tp->tasks_head;
         tp->tasks_head = task->next;
         if(!tp->tasks_head) tp->tasks_tail = NULL;
@@ -162,8 +162,8 @@ static void worker_thread(void *worker_thread_arg) {
         void *args = task->args;
         free(task); //free the task struct
 
-        dlogf("%s %d %s\n", "Thread", id, "executing task...");
+        dlogf("Thread %d is executing task...\n", id);
         (*task_func)(args, id);
-        dlogf("%s %d %s\n", "Thread", id, "done");
+        dlogf("Thread %d done\n", id);
     }
 }

@@ -10,8 +10,7 @@
 
 #ifdef __unix
     #define SLEEP(x) usleep((x) * 1000);
-#endif
-#ifdef _WIN32
+#elif _WIN32
     #define SLEEP(x) Sleep((x));
 #endif
 

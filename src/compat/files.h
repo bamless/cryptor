@@ -1,5 +1,5 @@
-#ifndef NFILES_H
-#define NFILES_H
+#ifndef FILES_H
+#define FILES_H
 
 
 #ifdef __unix

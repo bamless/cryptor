@@ -1,11 +1,15 @@
 #include "threadpool.h"
 #include "logging.h"
 #include "utilsCompat.h"
+#include "socket.h"
+#include "error.h"
+
+#include <stdlib.h>
 
 #define THREADS 3
 
 static void thread_func(void *args, int id) {
-	logf("%s %d %s\n", "Thread", id, "is doing stuff...");
+	logf("Thread %d is doing stuff...\n", id);
 	SLEEP(1000);
 }
 
@@ -18,5 +22,22 @@ int main() {
 	threadpool_add_task(tp, &thread_func, NULL);
 	threadpool_add_task(tp, &thread_func, NULL);
 	threadpool_add_task(tp, &thread_func, NULL);
-	threadpool_destroy(tp, SOFT_SHUTDOWN);
+	threadpool_destroy(tp, HARD_SHUTDOWN);
+	if(socket_startup()) {
+		perr_sock("Error: sock_startup");
+		exit(1);
+	}
+	Socket s = socket(AF_INET , SOCK_STREAM , 0);
+	if(!is_socket_valid(s)) {
+		perr_sock("error while creating socket");
+		exit(1);
+	}
+	if(socket_close(s)) {
+		perr_sock("error while closing socket");
+		exit(1);
+	}
+	if(socket_cleanup()) {
+		perr_sock("error while cleaning socket");
+		exit(1);
+	}
 }
