@@ -36,8 +36,8 @@ Dir* open_dir(const char *path, int *err) {
 	Dir *dir = malloc(sizeof(Dir));
 	if(!dir) {
 		errno = ENOMEM;
-		closedir(unix_dir);
 		set_err(err);
+		closedir(unix_dir);
 		return NULL;
 	}
 
@@ -46,8 +46,8 @@ Dir* open_dir(const char *path, int *err) {
 	dir->prev_entry = malloc(len_entry);
 	if(!dir->prev_entry) {
 		errno = ENOMEM;
-		closedir(unix_dir);
 		set_err(err);
+		closedir(unix_dir);
 		return NULL;
 	}
 	dir->dir_entry = NULL;
