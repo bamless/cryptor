@@ -11,7 +11,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-static void out_of_memory(DIR *unix_dir);
 static void set_err(int *);
 
 struct Dir {
@@ -23,7 +22,8 @@ struct Dir {
 Dir* open_dir(const char *path, int *err) {
 	*err = 0;
 	if(!(strlen(path) < 1) && strlen(path) - 1 > MAX_PATH_LENGTH) {
-		elog("Error open_dir: Path too long");
+		errno = ENAMETOOLONG;
+		set_err(err);
 		return NULL;
 	}
 
@@ -35,7 +35,8 @@ Dir* open_dir(const char *path, int *err) {
 
 	Dir *dir = malloc(sizeof(Dir));
 	if(!dir) {
-		out_of_memory(unix_dir);
+		errno = ENOMEM;
+		closedir(unix_dir);
 		set_err(err);
 		return NULL;
 	}
@@ -44,7 +45,9 @@ Dir* open_dir(const char *path, int *err) {
 	dir->dir = unix_dir;
 	dir->prev_entry = malloc(len_entry);
 	if(!dir->prev_entry) {
-		out_of_memory(unix_dir);
+		errno = ENOMEM;
+		closedir(unix_dir);
+		set_err(err);
 		return NULL;
 	}
 	dir->dir_entry = NULL;
@@ -95,11 +98,6 @@ int delete_file(const char *path) {
 	return 0;
 }
 
-static void out_of_memory(DIR* unix_dir) {
-	errno = ENOMEM;
-	closedir(unix_dir);
-}
-
 int get_file_size(const char *path, fsize_t *fsize) {
 	struct stat file_stat; int err = 0;
 	if(stat(path, &file_stat)) {
@@ -120,6 +118,9 @@ static void set_err(int *err) {
 			break;
 		case ENOTDIR:
 			*err = ERR_NOTDIR;
+			break;
+		case ENAMETOOLONG:
+			*err = ERR_NAMETOOLONG;
 			break;
 		default:
 			*err = ERR_GENERIC;

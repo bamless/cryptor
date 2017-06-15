@@ -24,7 +24,8 @@ typedef struct Dir Dir; //opaque type
 #define ERR_NOFILE 1
 #define ERR_ACCESS 2
 #define ERR_NOTDIR 3
-#define ERR_GENERIC 4
+#define ERR_NAMETOOLONG 4
+#define ERR_GENERIC 5
 
 /*Enum for the different file types a directory can hold*/
 typedef enum FileType {

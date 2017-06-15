@@ -120,6 +120,9 @@ static void set_err(int *err) {
 		case ERROR_ACCESS_DENIED:
 			*err = ERR_ACCESS;
 			break;
+		case ERROR_MRM_FILEPATH_TOO_LONG:
+			*err = ERR_NAMETOOLONG;
+			break;
 		default:
 			*err = ERR_GENERIC;
 			break;

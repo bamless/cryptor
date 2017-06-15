@@ -23,6 +23,7 @@ void thread_create(Thread *thread, void (*func)(void *), void *arg) {
     pthread_t id;
 
     struct funcargs *fa = malloc(sizeof(struct funcargs));
+    if(!fa) error_check("Error: thread_create", ENOMEM);
     fa->func = func;
     fa->args = arg;
 
