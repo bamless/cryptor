@@ -11,7 +11,7 @@ typedef off_t fsize_t;
 typedef uint64_t fsize_t;
 #endif
 
-#define MAX_PATH_LENGTH 1024
+#define MAX_PATH_LENGTH 512
 
 /**
  * Portable directory API for C. It encapsulates platform-specific directory
