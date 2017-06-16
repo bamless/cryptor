@@ -23,7 +23,7 @@ typedef int Socket;
 #include <winsock2.h>
 
 typedef SOCKET Socket;
-typedef socklen_t int; // needed in roder to use accept in a portable way (avoids compiler warnings)
+typedef int socklen_t; // needed in roder to use accept in a portable way (avoids compiler warnings)
 
 #define socket_startup()  do { \
         WSADATA data; \
