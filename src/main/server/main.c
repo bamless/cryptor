@@ -2,7 +2,8 @@
 #include "logging.h"
 #include "error.h"
 #include "threadpool.h"
-#include "connhandler.h" /*handle_connection(void * socket)*/
+//cryptor protocol server implementation
+#include "cryptorserver.h" /*cryptor_handle_connection(void * socket)*/
 
 #include <stdlib.h>
 #include <getopt.h>
@@ -22,13 +23,13 @@ typedef struct Config {
 
 static void usage(const char *exec_name);
 static void init_config(Config *cfg);
-static void parse_arg(int argc, char **argv, Config *cfg);
+static void parse_args(int argc, char **argv, Config *cfg);
 static void init_server_socket(Socket *server_sock, Config *cfg);
 
 int main(int argc, char **argv) {
 	Config cfg;
 	init_config(&cfg);
-	parse_arg(argc, argv, &cfg);
+	parse_args(argc, argv, &cfg);
 
 	socket_startup();
 
@@ -37,13 +38,13 @@ int main(int argc, char **argv) {
 	init_server_socket(&server_sock, &cfg);
 
 	struct sockaddr_in client;
-	int client_len = sizeof(client);
+	socklen_t client_len = sizeof(client);
 	while((client_sock = accept(server_sock, (struct sockaddr *) &client, &client_len))) {
 		if(!is_socket_valid(client_sock)) continue;
 
 		Socket *incoming_conn = malloc(sizeof(Socket));
 		*incoming_conn = client_sock;
-		threadpool_add_task(tp, &handle_connection, incoming_conn);
+		threadpool_add_task(tp, &cryptor_handle_connection, incoming_conn);
 	}
 
 	threadpool_destroy(tp, SOFT_SHUTDOWN);
@@ -78,7 +79,7 @@ static void init_server_socket(Socket *server_sock, Config *cfg) {
 	}
 }
 
-static void parse_arg(int argc, char **argv, Config *cfg) {
+static void parse_args(int argc, char **argv, Config *cfg) {
 	int c, cflag = 0;
 	while((c = getopt(argc, argv, ":c:n:p:")) != -1) {
 		switch(c) {
