@@ -1,32 +1,41 @@
 #include "socket.h"
 #include "logging.h"
 #include "error.h"
+#include "protocol.h"
+#include "cryptorclient.h"
 
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
 #include <ctype.h>
 
+typedef struct ParsedArgs {
+	char cmd;
+	unsigned long host_addr;
+	u_short host_port;
+	unsigned int seed;
+	const char *path;
+} ParsedArgs;
+
 static void usage(char *exec_name);
-static void parse_args(int argc, char **argv, char *cmd);
-static void connect_sock(Socket *sock, const char *host);
+static void parse_args(int argc, char **argv, ParsedArgs *args);
+static void strtoipandport(char *hostandport, unsigned long *ip, u_short *port);
+static void connect_sock(Socket *sock, unsigned long ip, u_short port);
 static void close_and_exit(Socket *sock);
 
-static int send_command(Socket *sock, const char *cmd);
-
 int main(int argc, char **argv) {
-	char cmd;
-	parse_args(argc, argv, &cmd);
+	ParsedArgs args;
+	parse_args(argc, argv, &args);
 
 	socket_startup();
 
 	Socket sock;
-	connect_sock(&sock , argv[optind]);
+	connect_sock(&sock , args.host_addr, args.host_port);
 
 	int resp_code = 0;
-	switch(cmd) {
+	switch(args.cmd) {
 		case 'l':
-			resp_code = send_command(&sock, "LSTF");
+			resp_code = cryptor_send_command(&sock, LSTF, 0, NULL);
 			break;
 	}
 
@@ -36,36 +45,13 @@ int main(int argc, char **argv) {
 	socket_cleanup();
 }
 
-static int send_command(Socket *sock, const char *cmd) {
-	//send command
-	if(send(*sock, cmd, 4, 0) == -1) {
-		perr_sock("Error: send_command");
-		close_and_exit(sock);
-	}
-
-	//read response code
-	char resp[4];
-	int received;
-    memset(resp, '\0', sizeof(resp));
-    if((received = recv(*sock, resp, sizeof(resp) - 1, MSG_WAITALL)) == -1) {
-		perr_sock("Error: send_command");
-		close_and_exit(sock);
-	}
-	if(received == 0) {
-		elog("Socket closed by foreign host");
-		close_and_exit(sock);
-	}
-
-	return (int) strtol(resp, NULL, 0);
-}
-
-static void connect_sock(Socket *sock, const char *host) {
+static void connect_sock(Socket *sock, unsigned long ip, u_short port) {
 	struct sockaddr_in server;
 
 	memset(&server, 0, sizeof(server));
 	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = inet_addr(host);
-	server.sin_port = htons(8888);
+	server.sin_addr.s_addr = ip;
+	server.sin_port = port;
 
 	*sock = socket(AF_INET, SOCK_STREAM, 0);
 	if(!is_socket_valid(*sock)) {
@@ -78,17 +64,19 @@ static void connect_sock(Socket *sock, const char *host) {
 	}
 }
 
-static void parse_args(int argc, char **argv, char *cmd) {
-	switch ((*cmd = getopt(argc, argv, "lRed"))) {
+static void parse_args(int argc, char **argv, ParsedArgs *args) {
+	int c;
+	if(argc < 3) usage(argv[0]);
+	switch ((c = getopt(argc, argv, "lRed"))) {
 		case 'l':
-			if(argc != 3) usage(argv[0]);
-			break;
 		case 'R':
 			if(argc != 3) usage(argv[0]);
+			args->cmd = c;
+			strtoipandport(argv[optind], &args->host_addr, &args->host_port);
+			if(args->host_addr < 0) usage(argv[0]);
+			if(args->host_port == 0) args->host_port = htons(DEFAULT_PORT);
 			break;
 		case 'e':
-			if(argc != 5) usage(argv[0]);
-			break;
 		case 'd':
 			if(argc != 5) usage(argv[0]);
 			break;
@@ -102,6 +90,29 @@ static void parse_args(int argc, char **argv, char *cmd) {
 	}
 }
 
+/*
+ * Parses a string of the form ipaddr:port and returns the ip addr in the "ip" arg
+ * and the port in the "port" arg.
+ * The "ip" arg will be < 0 if the function fails to parse the ip address, while
+ * the "port" arg will be 0 if the function fails to parse the port.
+ */
+static void strtoipandport(char *hostandport, unsigned long *ip, u_short *port) {
+	char *hoststr = strtok(hostandport, ":");
+	*ip = inet_addr(hoststr);
+
+	char *portstr = strtok(NULL, ":");
+	if(portstr == NULL) {
+		*port = 0;
+		return;
+	}
+
+	char *err;
+	long p = strtol(portstr, &err, 10);
+	if(*err != '\0' || p < PORT_MIN || p > PORT_MAX)
+		p = 0;
+	*port = (u_short) htons(p);
+}
+
 static void close_and_exit(Socket *sock) {
 	socket_close(*sock);
 	socket_cleanup();
@@ -109,6 +120,6 @@ static void close_and_exit(Socket *sock) {
 }
 
 static void usage(char *exec_name) {
-	elogf("Usage: %s [-l | -R | -e seed path | -d seed path] ip\n", exec_name);
+	elogf("Usage: %s [-l | -R | -e seed path | -d seed path] ip:port\n", exec_name);
 	exit(1);
 }

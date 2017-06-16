@@ -2,6 +2,7 @@
 #include "logging.h"
 #include "error.h"
 #include "threadpool.h"
+#include "protocol.h"
 //cryptor protocol server implementation
 #include "cryptorserver.h" /*cryptor_handle_connection(void * socket)*/
 
@@ -12,7 +13,6 @@
 #include <ctype.h>
 #include <string.h>
 
-#define DEFAULT_PORT 8888
 #define DEFAULT_THREADS 20
 
 typedef struct Config {
@@ -58,7 +58,7 @@ static void init_server_socket(Socket *server_sock, Config *cfg) {
 
 	memset(&server, 0, sizeof(server));
 	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = INADDR_ANY;
+	server.sin_addr.s_addr = htonl(INADDR_ANY);
 	server.sin_port = htons(cfg->port);
 
 	*server_sock = socket(AF_INET, SOCK_STREAM, 0);
