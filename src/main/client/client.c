@@ -88,7 +88,7 @@ static void strtoipandport(char *hostandport, unsigned long *ip, u_short *port) 
 	long p = strtol(portstr, &err, 10);
 	if(*err != '\0' || p < PORT_MIN || p > PORT_MAX)
 		p = 0;
-	*port = (u_short) htons(p);
+	*port = (u_short) htons((uint16_t) p);
 }
 
 static void usage(char *exec_name) {
