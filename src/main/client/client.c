@@ -8,13 +8,14 @@
 #include <getopt.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 
 typedef struct ParsedArgs {
-	char cmd;
-	unsigned long host_addr;
-	u_short host_port;
-	unsigned int seed;
-	const char *path;
+	char cmd;				 /*The command passed from arguments*/
+	unsigned long host_addr; /*The server address*/
+	u_short host_port;		 /*The server port*/
+	unsigned int seed;		 /*The seed for the ENCR and DECR command*/
+	const char *path;		 /*The path for the ENCR and DECR command*/
 } ParsedArgs;
 
 static void usage(char *exec_name);
@@ -34,6 +35,9 @@ int main(int argc, char **argv) {
 		case 'l':
 			resp_code = cryptor_send_command(sock, LSTF, 0, NULL);
 			break;
+		case 'e':
+			resp_code = cryptor_send_command(sock, ENCR, args.seed, args.path);
+			break;
 	}
 
 	logf("Server responded with code %d\n", resp_code);
@@ -49,7 +53,8 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 		case 'l':
 		case 'R':
 			if(argc != 3) usage(argv[0]);
-			args->cmd = c;
+			args->cmd = c; //the command
+			//converts the string ip:port to actual values
 			strtoipandport(argv[optind], &args->host_addr, &args->host_port);
 			if(args->host_addr < 0) usage(argv[0]);
 			if(args->host_port == 0) args->host_port = htons(DEFAULT_PORT);
@@ -57,6 +62,18 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 		case 'e':
 		case 'd':
 			if(argc != 5) usage(argv[0]);
+			args->cmd = c; //the command
+			//converts the string ip:port to actual values
+			strtoipandport(argv[optind + 2], &args->host_addr, &args->host_port);
+			if(args->host_addr < 0) usage(argv[0]);
+			if(args->host_port == 0) args->host_port = htons(DEFAULT_PORT);
+			//convert the 'seed' argument
+			char *err;
+			unsigned long seed = strtol(argv[optind], &err, 10);
+			if(*err != '\0' || seed > UINT_MAX) usage(argv[0]);
+			args->seed = (unsigned int) seed;
+			//sets the 'path' argument
+			args->path = argv[optind + 1];
 			break;
 		case '?':
 			if(isprint(optopt))

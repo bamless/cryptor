@@ -3,6 +3,7 @@
 #include "utilsCompat.h"
 #include "logging.h"
 #include "error.h"
+#include "protocol.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +14,13 @@ void cryptor_handle_connection(Socket client) {
     recv(client, cmd, sizeof(cmd) - 1, MSG_WAITALL);
 
     logf("Received command %s\n", cmd);
+
+    if(strcmp(cmd, ENCR) == 0) {
+        char cmdline[MAX_CMDLINE_LEN - CMD_LEN + 1]; //we have already read the command, so subtract its size
+        memset(cmdline, 0, sizeof(cmdline));
+        recv(client, cmdline, sizeof(cmdline) - 1, MSG_WAITALL);
+        logf("Rest of command line %s\n", cmdline);
+    }
 
     send(client, "200", 3, 0);
 

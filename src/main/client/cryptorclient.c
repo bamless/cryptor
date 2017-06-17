@@ -23,11 +23,10 @@ int cryptor_send_command(Socket sock, const char *cmd, unsigned int seed, const 
             elog("Path too long");
             close_and_exit(sock);
         }
-        int max_cmdline_len = MAX_PROT_PATH + UINT_LEN + CMD_LEN + 3; //the 3 is for the 2 spaces and the null terminator
-        char cmdstr[max_cmdline_len];
-        memset(cmdstr, 0, sizeof(cmdstr));
-        snprintf(cmdstr, max_cmdline_len, "%s %u %s", cmd, seed, path);
-        if(send(sock, cmdstr, max_cmdline_len, 0) == -1) {
+        char cmdline[MAX_CMDLINE_LEN + 1]; //+1 for the null temination
+        memset(cmdline, 0, sizeof(cmdline));
+        snprintf(cmdline, MAX_CMDLINE_LEN + 1, "%s %u %s", cmd, seed, path);
+        if(send(sock, cmdline, sizeof(cmdline) - 1, 0) == -1) {
             perr_sock("Error: send_command");
             close_and_exit(sock);
         }
