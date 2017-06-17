@@ -2,9 +2,11 @@
 #include "logging.h"
 #include "error.h"
 #include "threadpool.h"
+#include "files.h"
+
+//cyptor protocol headers
 #include "protocol.h"
-//cryptor protocol server implementation
-#include "cryptorserver.h" /*cryptor_handle_connection(void * socket)*/
+#include "cryptorserver.h" /*cryptor_handle_connection(Socket socket)*/
 
 #include <stdlib.h>
 #include <getopt.h>
@@ -16,26 +18,31 @@
 #define DEFAULT_THREADS 20
 
 typedef struct Config {
-	u_short port;
-	char *pwd;
-	int thread_count;
+	u_short port;		/*The server port*/
+	char *pwd;			/*The process working directory*/
+	int thread_count;	/*The number of threads of the threadpool*/
 } Config;
 
 static void usage(const char *exec_name);
 static void init_config(Config *cfg);
 static void parse_args(int argc, char **argv, Config *cfg);
-static void init_server_socket(Socket *server_sock, Config *cfg);
+static void threadpool_handle_connection(void *incoming_conn, int id);
 
 int main(int argc, char **argv) {
 	Config cfg;
 	init_config(&cfg);
 	parse_args(argc, argv, &cfg);
 
+	if(change_dir(cfg.pwd)) {
+		perr("Error");
+		exit(1);
+	}
+
 	socket_startup();
 
 	ThreadPool *tp = threadpool_create(cfg.thread_count);
 	Socket server_sock, client_sock;
-	init_server_socket(&server_sock, &cfg);
+	server_sock = init_server_socket(htons(cfg.port));
 
 	struct sockaddr_in client;
 	socklen_t client_len = sizeof(client);
@@ -44,7 +51,7 @@ int main(int argc, char **argv) {
 
 		Socket *incoming_conn = malloc(sizeof(Socket));
 		*incoming_conn = client_sock;
-		threadpool_add_task(tp, &cryptor_handle_connection, incoming_conn);
+		threadpool_add_task(tp, &threadpool_handle_connection, incoming_conn);
 	}
 
 	threadpool_destroy(tp, SOFT_SHUTDOWN);
@@ -53,30 +60,12 @@ int main(int argc, char **argv) {
 	socket_cleanup();
 }
 
-static void init_server_socket(Socket *server_sock, Config *cfg) {
-	struct sockaddr_in server;
-
-	memset(&server, 0, sizeof(server));
-	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = htonl(INADDR_ANY);
-	server.sin_port = htons(cfg->port);
-
-	*server_sock = socket(AF_INET, SOCK_STREAM, 0);
-	if(!is_socket_valid(*server_sock)) {
-		perr_sock("Error: creating socket");
-		socket_cleanup();
-		exit(1);
-	}
-	if(bind(*server_sock, (struct sockaddr *) &server, sizeof(server))) {
-		perr_sock("Error: bind server");
-		socket_cleanup();
-		exit(1);
-	}
-	if(listen(*server_sock, SOMAXCONN)) {
-		perr_sock("Error: bind server");
-		socket_cleanup();
-		exit(1);
-	}
+static void threadpool_handle_connection(void *incoming_conn, int id) {
+	logf("Thread %d is handling connection\n", id);
+	Socket client = *((Socket *) incoming_conn);
+	free(incoming_conn);
+	cryptor_handle_connection(client);
+	logf("Thread %d done\n", id);
 }
 
 static void parse_args(int argc, char **argv, Config *cfg) {

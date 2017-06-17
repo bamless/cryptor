@@ -20,8 +20,6 @@ typedef struct ParsedArgs {
 static void usage(char *exec_name);
 static void parse_args(int argc, char **argv, ParsedArgs *args);
 static void strtoipandport(char *hostandport, unsigned long *ip, u_short *port);
-static void connect_sock(Socket *sock, unsigned long ip, u_short port);
-static void close_and_exit(Socket *sock);
 
 int main(int argc, char **argv) {
 	ParsedArgs args;
@@ -29,13 +27,12 @@ int main(int argc, char **argv) {
 
 	socket_startup();
 
-	Socket sock;
-	connect_sock(&sock , args.host_addr, args.host_port);
+	Socket sock = init_connection(args.host_addr, args.host_port);
 
 	int resp_code = 0;
 	switch(args.cmd) {
 		case 'l':
-			resp_code = cryptor_send_command(&sock, LSTF, 0, NULL);
+			resp_code = cryptor_send_command(sock, LSTF, 0, NULL);
 			break;
 	}
 
@@ -43,25 +40,6 @@ int main(int argc, char **argv) {
 
 	socket_close(sock);
 	socket_cleanup();
-}
-
-static void connect_sock(Socket *sock, unsigned long ip, u_short port) {
-	struct sockaddr_in server;
-
-	memset(&server, 0, sizeof(server));
-	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = ip;
-	server.sin_port = port;
-
-	*sock = socket(AF_INET, SOCK_STREAM, 0);
-	if(!is_socket_valid(*sock)) {
-		perr_sock("Error: creating socket");
-		close_and_exit(sock);
-	}
-	if(connect(*sock, (struct sockaddr *) &server, sizeof(server))) {
-		perr_sock("Error: bind");
-		close_and_exit(sock);
-	}
 }
 
 static void parse_args(int argc, char **argv, ParsedArgs *args) {
@@ -111,12 +89,6 @@ static void strtoipandport(char *hostandport, unsigned long *ip, u_short *port) 
 	if(*err != '\0' || p < PORT_MIN || p > PORT_MAX)
 		p = 0;
 	*port = (u_short) htons(p);
-}
-
-static void close_and_exit(Socket *sock) {
-	socket_close(*sock);
-	socket_cleanup();
-	exit(1);
 }
 
 static void usage(char *exec_name) {

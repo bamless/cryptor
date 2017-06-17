@@ -54,5 +54,7 @@ int delete_file(const char *path);
 is guaranteed to be >= 0. The actual type of fsize_t is implementation defined.
 @return 0 on success and fsize is set to the file size. non 0 error code on failure*/
 int get_file_size(const char *path, fsize_t *fsize);
+/*Changes the working directory of the process. Returns 0 on success, non 0 error on failure*/
+int change_dir(const char *path);
 
 #endif

@@ -108,6 +108,15 @@ int get_file_size(const char *path, fsize_t *fsize) {
 	return 0;
 }
 
+int change_dir(const char *path) {
+	if(chdir(path)) {
+		int err = 0;
+		set_err(&err);
+		return err;
+	}
+	return 0;
+}
+
 static void set_err(int *err) {
 	switch (errno) {
 		case ENOENT:
