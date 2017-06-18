@@ -10,6 +10,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
+#include <inttypes.h>
 
 typedef struct ParsedArgs {
 	char cmd;				 /*The command passed from arguments*/

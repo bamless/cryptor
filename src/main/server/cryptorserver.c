@@ -7,8 +7,11 @@
 #include "files.h"
 #include "protocol.h"
 
+#include "fileUtils.h"
+
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 static void handle_list_commands(Socket client, int is_recursive);
 
@@ -40,11 +43,12 @@ static void list(const char *path, StringBuffer *sb, int is_recursive) {
         next_dir(dir, &entry);
         if(strcmp(entry.name, ".") != 0 && strcmp(entry.name, "..") != 0) {
             if(entry.type == NFILE) {
+                char full_file_path[MAX_PATH_LENGTH];
+                snprintf(full_file_path, sizeof(full_file_path), "%s/%s", path, entry.name);
                 fsize_t fsize;
-                if(get_file_size(entry.name, &fsize))
-                    return;
+                if(get_file_size(full_file_path, &fsize)) continue;
                 char fsize_str[20]; //20 the max length of 64 bit int in base 10
-                snprintf(fsize_str, sizeof(fsize_str), "%ju ", (uintmax_t) fsize); //we can safely cast to uintmax_t because get_file_size guarantees a result >= 0
+                snprintf(fsize_str, sizeof(fsize_str), "%"PRIu64" ", (uintmax_t) fsize); //we can safely cast to uintmax_t because get_file_size guarantees a result >= 0
                 sbuf_appendstr(sb, fsize_str);
                 sbuf_appendstr(sb, path);
                 sbuf_appendstr(sb, "/");

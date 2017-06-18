@@ -71,10 +71,8 @@ void next_dir(Dir *dir, DirEntry *entry) {
 	WideCharToMultiByte(CP_UTF8, 0, dir->ffd.cFileName, 256, entry->name, 256, NULL, NULL);
 	if(dir->ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 		entry->type = DIRECTORY;
-	} else if (dir->ffd.dwFileAttributes & FILE_ATTRIBUTE_NORMAL) {
-		entry->type = NFILE;
 	} else {
-		entry->type = UNKNW;
+		entry->type = NFILE;
 	}
 }
 
@@ -98,13 +96,14 @@ int get_file_size(const char *path, fsize_t *fsize) {
 	int err = 0;
 	DWORD dwFileSizeLow = 0;
 	DWORD dwFileSizeHigh = 0;
-	HANDLE hFile = CreateFile(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hFile = CreateFile(path, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if(hFile == INVALID_HANDLE_VALUE) {
 		set_err(&err);
 		return err;
 	}
 
 	dwFileSizeLow = GetFileSize(hFile, &dwFileSizeHigh);
+	CloseHandle(hFile);
  	*fsize = (((fsize_t) dwFileSizeHigh) << 32) | dwFileSizeLow; //We are guaranteed by the WinAPI that DWORD is always 32 bit
 	return 0;
 }
