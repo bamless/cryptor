@@ -23,7 +23,7 @@ int cryptor_send_command(Socket sock, const char *cmd, unsigned int seed, const 
             elog("Path too long");
             close_and_exit(sock);
         }
-        char cmdline[MAX_CMDLINE_LEN + 1]; //+1 for the null temination
+        char cmdline[MAX_CMDLINE_LEN + 1]; //+1 for the null teminator
         memset(cmdline, 0, sizeof(cmdline));
         snprintf(cmdline, MAX_CMDLINE_LEN + 1, "%s %u %s", cmd, seed, path);
         if(send(sock, cmdline, sizeof(cmdline) - 1, 0) == -1) {
@@ -36,6 +36,15 @@ int cryptor_send_command(Socket sock, const char *cmd, unsigned int seed, const 
     }
 
     return read_response(sock);
+}
+
+void cryptor_read_more(Socket server, StringBuffer *sb) {
+    char buff[256];
+    ssize_t bytes_recv;
+    while((bytes_recv = recv(server, buff, sizeof(buff), 0)) > 0) {
+        sbuf_append(sb, buff, bytes_recv);
+        if(sbuf_strstr(sb, "\r\n\r\n") != 0) break; //\r\n\r\n signals the end of the output as per protocol spec.
+    }
 }
 
 Socket init_connection(unsigned long addr, u_short port) {

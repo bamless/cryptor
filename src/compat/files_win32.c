@@ -105,17 +105,16 @@ int get_file_size(const char *path, fsize_t *fsize) {
 	}
 
 	dwFileSizeLow = GetFileSize(hFile, &dwFileSizeHigh);
- 	*fsize = (((fsize_t) dwFileSizeHigh) << 32) | dwFileSizeLow;
+ 	*fsize = (((fsize_t) dwFileSizeHigh) << 32) | dwFileSizeLow; //We are guaranteed by the WinAPI that DWORD is always 32 bit
 	return 0;
 }
 
 int change_dir(const char *path) {
-	if(!SetCurrentDirectory(path)) {
-		int err = 0;
-		set_err(&err);
-		return err;
-	}
-	return 0;
+	return SetCurrentDirectory(path) ? 0 : 1;
+}
+
+int get_cwd(char *buff, size_t len) {
+	return GetCurrentDirectory(len, buff) ? 0 : 1;
 }
 
 static void set_err(int *err) {

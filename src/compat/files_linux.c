@@ -64,7 +64,7 @@ int close_dir(Dir *dir) {
 
 int has_next(Dir *dir) {
 	DIR *unix_dir = dir->dir;
-	readdir_r(unix_dir, dir->prev_entry, &dir->dir_entry);
+	readdir_r(unix_dir, dir->prev_entry, &dir->dir_entry); //Thread safety, yeee
 	return dir->dir_entry ? 1 : 0;
 }
 
@@ -86,7 +86,8 @@ void next_dir(Dir *dir, DirEntry *entry) {
 			entry->type = UNKNW;
 			break;
 	}
-	strncpy(entry->name, unix_dirent->d_name, 256);
+	strncpy(entry->name, unix_dirent->d_name, 255);
+	entry->name[255] = '\0'; //null terminate just in case strncpy truncates
 }
 
 int delete_file(const char *path) {
@@ -109,12 +110,11 @@ int get_file_size(const char *path, fsize_t *fsize) {
 }
 
 int change_dir(const char *path) {
-	if(chdir(path)) {
-		int err = 0;
-		set_err(&err);
-		return err;
-	}
-	return 0;
+	return chdir(path);
+}
+
+int get_cwd(char *buff, size_t len) {
+	return getcwd(buff, len) ? 0 : 1;
 }
 
 static void set_err(int *err) {

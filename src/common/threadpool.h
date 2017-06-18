@@ -1,7 +1,7 @@
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
 
-typedef struct ThreadPool ThreadPool; //opaque
+typedef struct ThreadPool ThreadPool; //opaque, to provide encapsulation
 
 enum shutdown_type {
     /*The worker threads empty the queue before shutting*/

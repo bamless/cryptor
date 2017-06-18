@@ -4,6 +4,10 @@
 #define PORT_MAX 65535
 #define PORT_MIN 1
 
+/*
+ * Header only compatibility module for sockets.
+ */
+
 //Unix sockets
 #ifdef __unix
 #include <sys/types.h>  /*not required on linux but required on other unix systems*/

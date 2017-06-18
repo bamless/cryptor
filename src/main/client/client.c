@@ -1,6 +1,7 @@
 #include "socket.h"
 #include "logging.h"
 #include "error.h"
+#include "stringbuf.h"
 #include "protocol.h"
 #include "cryptorclient.h"
 
@@ -35,38 +36,51 @@ int main(int argc, char **argv) {
 		case 'l':
 			resp_code = cryptor_send_command(sock, LSTF, 0, NULL);
 			break;
+		case 'R' :
+			resp_code = cryptor_send_command(sock, LSTR, 0, NULL);
+			break;
 		case 'e':
 			resp_code = cryptor_send_command(sock, ENCR, args.seed, args.path);
+			break;
+		case 'd':
+			resp_code = cryptor_send_command(sock, DECR, args.seed, args.path);
 			break;
 	}
 
 	logf("Server responded with code %d\n", resp_code);
+
+	//If the response of the server is 300 (i.e. the server will send more output) read the remaining output
+	if(resp_code == RETMORE_INT) {
+		StringBuffer *sb = sbuf_create();
+		cryptor_read_more(sock, sb);
+
+		//print the received output
+		printf("%s", sbuf_get_backing_buf(sb));
+		sbuf_destroy(sb);
+	}
 
 	socket_close(sock);
 	socket_cleanup();
 }
 
 static void parse_args(int argc, char **argv, ParsedArgs *args) {
-	int c;
 	if(argc < 3) usage(argv[0]);
+	//get the ip addr and the port
+	strtoipandport(argv[argc - 1], &args->host_addr, &args->host_port);
+	if(args->host_addr < 0) usage(argv[0]);
+	if(args->host_port == 0) args->host_port = htons(DEFAULT_PORT);
+
+	int c;
 	switch ((c = getopt(argc, argv, "lRed"))) {
 		case 'l':
 		case 'R':
 			if(argc != 3) usage(argv[0]);
 			args->cmd = c; //the command
-			//converts the string ip:port to actual values
-			strtoipandport(argv[optind], &args->host_addr, &args->host_port);
-			if(args->host_addr < 0) usage(argv[0]);
-			if(args->host_port == 0) args->host_port = htons(DEFAULT_PORT);
 			break;
 		case 'e':
-		case 'd':
+		case 'd': {
 			if(argc != 5) usage(argv[0]);
 			args->cmd = c; //the command
-			//converts the string ip:port to actual values
-			strtoipandport(argv[optind + 2], &args->host_addr, &args->host_port);
-			if(args->host_addr < 0) usage(argv[0]);
-			if(args->host_port == 0) args->host_port = htons(DEFAULT_PORT);
 			//convert the 'seed' argument
 			char *err;
 			unsigned long seed = strtol(argv[optind], &err, 10);
@@ -75,12 +89,13 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 			//sets the 'path' argument
 			args->path = argv[optind + 1];
 			break;
+		}
 		case '?':
 			if(isprint(optopt))
 				elogf("Unknown option `-%c`.\n", optopt);
 			else
 				elogf("Unknown option character `\\x%x`.\n", optopt);
-				usage(argv[0]);
+			usage(argv[0]);
 			break;
 	}
 }
@@ -94,6 +109,7 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 static void strtoipandport(char *hostandport, unsigned long *ip, u_short *port) {
 	char *hoststr = strtok(hostandport, ":");
 	*ip = inet_addr(hoststr);
+	if(*ip == INADDR_NONE) *ip = -1;
 
 	char *portstr = strtok(NULL, ":");
 	if(portstr == NULL) {
@@ -109,6 +125,6 @@ static void strtoipandport(char *hostandport, unsigned long *ip, u_short *port) 
 }
 
 static void usage(char *exec_name) {
-	elogf("Usage: %s [-l | -R | -e seed path | -d seed path] ip:port\n", exec_name);
+	elogf("Usage: %s [-l | -R | -e seed path | -d seed path] ipaddr:port\n", exec_name);
 	exit(1);
 }
