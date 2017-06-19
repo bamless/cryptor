@@ -7,7 +7,7 @@
 #include <windows.h>
 
 static void set_err(int *);
-static void fix_slash(char *str, int length);
+static void fix_slash(char *str);
 
 struct Dir {
 	HANDLE find;
@@ -34,7 +34,7 @@ Dir* open_dir(const char *path, int *err) {
 	strcpy(szDir, "\\\\?\\");
 	strcat(szDir, path);
 	strcat(szDir, "\\*");
-	fix_slash(szDir, MAX_PATH_LENGTH);
+	fix_slash(szDir);
 
 	WCHAR wSzDir[MAX_PATH_LENGTH];
 	MultiByteToWideChar(CP_UTF8, 0, szDir, MAX_PATH_LENGTH, wSzDir, MAX_PATH_LENGTH);
@@ -85,11 +85,11 @@ int delete_file(const char *path) {
 	return 0;
 }
 
-static void fix_slash(char *str, int length) {
-	for(int i = 0; i < length; i++) {
-		if(str[i] == '\0') break;
-		if(str[i] == '/') str[i] = '\\';
-	}
+//Converts slashes to backslashes, needed by some win32 API functions
+static void fix_slash(char *str) {
+	do {
+		if(*str == '/') *str = '\\';
+	} while(*(++str));
 }
 
 int get_file_size(const char *path, fsize_t *fsize) {
@@ -113,7 +113,15 @@ int change_dir(const char *path) {
 }
 
 int get_cwd(char *buff, size_t len) {
-	return GetCurrentDirectory(len, buff) ? 0 : 1;
+	if(!GetCurrentDirectory(len, buff)) {
+		return 1;
+	}
+	//covert backslashes to slashes
+	char *str = buff;
+	do {
+		if(*str == '\\') *str = '/';
+	} while(*(++str));
+	return 0;
 }
 
 static void set_err(int *err) {

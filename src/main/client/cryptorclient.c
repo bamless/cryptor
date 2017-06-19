@@ -43,7 +43,7 @@ void cryptor_read_more(Socket server, StringBuffer *sb) {
     ssize_t bytes_recv;
     while((bytes_recv = recv(server, buff, sizeof(buff), 0)) > 0) {
         sbuf_append(sb, buff, bytes_recv);
-        if(sbuf_strstr(sb, "\r\n\r\n") != 0) break; //\r\n\r\n signals the end of the output as per protocol spec.
+        if(sbuf_endswith(sb, "\r\n\r\n")) break; //\r\n\r\n signals the end of the output as per protocol spec.
     }
 }
 

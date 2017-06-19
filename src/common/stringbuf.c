@@ -42,6 +42,12 @@ size_t sbuf_get_len(StringBuffer *sbuf) {
     return sbuf->len;
 }
 
+int sbuf_endswith(StringBuffer *sbuf, const char *str) {
+    int str_len = strlen(str);
+    if(sbuf->len < str_len) return 0;
+    return strcmp(&sbuf->buff[sbuf->len - str_len], str) == 0;
+}
+
 void sbuf_append(StringBuffer *sbuf, const char *str, size_t len) {
     if(sbuf->len + len >= sbuf->size) sbuf_grow(sbuf, len + 1); //the >= and the +1 are for the terminating NUL
     memcpy(&sbuf->buff[sbuf->len], str, len);
@@ -63,7 +69,7 @@ static void sbuf_grow(StringBuffer *sbuf, size_t len) {
     size_t new_size = sbuf->size;
     //multiply by 2 the size until it can hold sizeof(len) new data. Multiplying, instead of growing at a constant rate, ensures constant amortized time complexity
     while(new_size < sbuf->size + len)
-        new_size *= 2;
+        new_size <<= 1;
     char *new_buff = realloc(sbuf->buff, sizeof(char) * new_size);
     if(!new_buff) {
         fprintf(stderr, "%s\n", "Error: stringbuf: out of memory");
