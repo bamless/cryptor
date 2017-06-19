@@ -45,6 +45,7 @@ void cryptor_read_more(Socket server, StringBuffer *sb) {
         sbuf_append(sb, buff, bytes_recv);
         if(sbuf_endswith(sb, "\r\n\r\n")) break; //\r\n\r\n signals the end of the output as per protocol spec.
     }
+    if(bytes_recv <= 0) perr_sock("Error");
 }
 
 Socket init_connection(unsigned long addr, u_short port) {
