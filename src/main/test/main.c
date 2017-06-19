@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 #include <inttypes.h>
+#include <string.h>
 
 int main() {
 	StringBuffer *sb = sbuf_create();
