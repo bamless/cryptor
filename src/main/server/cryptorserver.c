@@ -33,7 +33,7 @@ void cryptor_handle_connection(Socket client) {
     socket_close(client);
 }
 
-/* Appends the line "fsize file_path\r\n\r\n" in the string buffer for every file in the PWD.
+/* Appends the line "fsize file_path\r\n" in the string buffer for every file in the PWD.
  * If is_recursive is non-zero then then it explores recursevely all the subfolders.*/
 static void list(const char *path, StringBuffer *sb, int is_recursive) {
     int err;
