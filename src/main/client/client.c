@@ -52,9 +52,7 @@ int main(int argc, char **argv) {
 
 	//If the response of the server is 300 (i.e. the server will send more output) read the remaining output
 	if(resp_code == RETMORE_INT) {
-		StringBuffer *sb = sbuf_create();
 		cryptor_print_more(sock);
-		sbuf_destroy(sb);
 	}
 
 	socket_close(sock);
