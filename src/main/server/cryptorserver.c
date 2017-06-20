@@ -32,44 +32,51 @@ void cryptor_handle_connection(Socket client) {
 
 /* Sends the line "fsize file_path\r\n" for every file in the PWD. If is_recursive
  * is non-zero then then it explores recursevely all the subfolders.*/
-static void send_list(Socket s, const char *path, int is_recursive) {
+static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int is_recursive) {
     int err;
-    Dir *dir = open_dir(path, &err);
+    Dir *dir = open_dir(sbuf_get_backing_buf(path), &err);
     if(!dir || err) return;
 
     DirEntry entry;
     while(has_next(dir)) {
         next_dir(dir, &entry);
         if(strcmp(entry.name, ".") != 0 && strcmp(entry.name, "..") != 0) {
-            char full_entry_path[MAX_PATH_LENGTH + 1];
-            snprintf(full_entry_path, MAX_PATH_LENGTH, "%s/%s", path, entry.name);
-            full_entry_path[MAX_PATH_LENGTH] = '\0'; //just in case it was truncated
+            int orig_len = sbuf_get_len(path);     //save the prev length of the path
+            sbuf_appendf(path, "/%s", entry.name); //append the entry name to obtain the full path
             if(entry.type == NFILE) {
                 fsize_t fsize;
-                if(get_file_size(full_entry_path, &fsize)) continue;
-                char line[MAX_PATH_LENGTH + 20 + 3]; //20 the max length of 64 bit int in base 10, 3 for \r\n and NUL term
+                if(get_file_size(sbuf_get_backing_buf(path), &fsize)) {
+                    sbuf_truncate(path, orig_len);
+                    continue;
+                }
+                sbuf_clear(cmdline);
                 //we can safely cast to uintmax_t because get_file_size guarantees a result >= 0
-                int written = snprintf(line, sizeof(line) - 1, "%"PRIu64" %s\r\n", (uintmax_t) fsize, full_entry_path);
-                send(s, line, written, 0);
+                sbuf_appendf(cmdline, "%"PRIu64" %s\r\n", (uintmax_t) fsize, sbuf_get_backing_buf(path));
+                send(s, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), 0);
             }
             if(entry.type == DIRECTORY && is_recursive) {
-                send_list(s, full_entry_path, is_recursive);
+                send_list(s, path, cmdline, is_recursive);
             }
+            sbuf_truncate(path, orig_len); //remove the entry name from the path
         }
     }
     close_dir(dir);
 }
 
 static void handle_list_commands(Socket client, int is_recursive) {
-    char pwd[MAX_PATH_LENGTH + 1];
-    if(get_cwd(pwd, sizeof(pwd))) {
-        send(client, RETERR, 3, 0);
-        return;
-    }
+    char *pwd = get_cwd();
+
+    StringBuffer *path = sbuf_create();
+    StringBuffer *cmdline = sbuf_create();
+    sbuf_appendstr(path, pwd);
+    free(pwd);
 
     send(client, RETMORE, 3, 0);
-    send_list(client, pwd, is_recursive); //sends the directory list
+    send_list(client, path, cmdline, is_recursive); //sends the directory list
     send(client, "\r\n", 2, 0); //signal end of output (\r\n\r\n)
+
+    sbuf_destroy(path);
+    sbuf_destroy(cmdline);
 }
 
 Socket init_server_socket(u_short port) {

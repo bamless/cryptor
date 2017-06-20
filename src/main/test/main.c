@@ -34,6 +34,8 @@ int main() {
 	StringBuffer *sb = sbuf_create();
 	sbuf_appendstr(sb, "CIAO");
 	printf("%s\n", sbuf_get_backing_buf(sb));
-	sbuf_printf(sb, "%s %d %s", "hey", 10, "no");
+	printf("%d\n", sbuf_get_backing_size(sb));
+	sbuf_appendf(sb, "%s %d %s", "heyheyhey4heyheyhey4heyheyhey4heyheyhey4heyheyhey4heyheyhey4", 10, "no00");
 	printf("%s\n", sbuf_get_backing_buf(sb));
+	printf("%d\n", sbuf_get_backing_size(sb));
 }

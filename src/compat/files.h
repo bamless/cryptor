@@ -11,8 +11,6 @@ typedef off_t fsize_t;
 typedef uint64_t fsize_t;
 #endif
 
-#define MAX_PATH_LENGTH 1024
-
 /**
  * Portable directory API for C. It encapsulates platform-specific directory
  * logic and provides a unified interface. For concrete implementation see
@@ -37,7 +35,7 @@ typedef struct DirEntry {
   char name[256];
 } DirEntry;
 
-/*Opens a directory at path "path. If fails it returns NULL and err is set to the appropriate error code"*/
+/*Opens a directory at path "path. If it fails returns NULL and err is set to the appropriate error code"*/
 Dir* open_dir(const char *path, int *err);
 /*Closes Dir. returns 0 on success, nonzero if it fails*/
 int close_dir(Dir *dir);
@@ -56,7 +54,8 @@ is guaranteed to be >= 0. The actual type of fsize_t is implementation defined.
 int get_file_size(const char *path, fsize_t *fsize);
 /*Changes the working directory of the process. Returns 0 on success, non 0 on failure*/
 int change_dir(const char *path);
-/*Returns the pwd absolute path in the 'buff' arg. Returns 0 on success, non 0 on failure*/
-int get_cwd(char *buff, size_t len);
+/*Returns the pwd absolute path. The buffer is malloc'd so the caller
+ *should call free on the buffer once he's done using it.*/
+char* get_cwd();
 
 #endif

@@ -19,17 +19,13 @@ int cryptor_send_command(Socket sock, const char *cmd, unsigned int seed, const 
             close_and_exit(sock);
         }
     } else if(strcmp(cmd, ENCR) == 0 || strcmp(cmd, DECR) == 0) {
-        if(strlen(path) > MAX_PROT_PATH) {
-            elog("Path too long");
-            close_and_exit(sock);
-        }
-        char cmdline[MAX_CMDLINE_LEN + 1]; //+1 for the null teminator
-        memset(cmdline, 0, sizeof(cmdline));
-        snprintf(cmdline, MAX_CMDLINE_LEN + 1, "%s %u %s", cmd, seed, path);
-        if(send(sock, cmdline, sizeof(cmdline) - 1, 0) == -1) {
+        StringBuffer *cmdline = sbuf_create();
+        sbuf_appendf(cmdline, "%s %u %s\r\n", cmd, seed, path);
+        if(send(sock, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), 0)) {
             perr_sock("Error: send_command");
             close_and_exit(sock);
         }
+        sbuf_destroy(cmdline);
     } else {
         elog("Error: cryptor_send_command: unknown command");
         close_and_exit(sock);

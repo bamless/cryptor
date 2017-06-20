@@ -58,17 +58,24 @@ void sbuf_append(StringBuffer *sbuf, const char *str, size_t len) {
 
 static void sbuf_vappendf(StringBuffer *sb, const char *fmt, va_list ap) {
     int num_required;
-    while ((num_required = vsnprintf(sb->buff+sb->len, sb->size-sb->len, fmt, ap)) >= sb->size-sb->len)
+    va_list copy;
+    va_copy(copy, ap);
+    while ((num_required = vsnprintf(sb->buff+sb->len, sb->size-sb->len, fmt, copy)) >= sb->size-sb->len) {
         sbuf_grow(sb, num_required + 1);
+        va_copy(copy, ap);
+    }
     sb->len += num_required;
 }
 
-void sbuf_printf(StringBuffer *sbuf, const char *fmt, ...) {
-    sbuf_clear(sbuf);
+void sbuf_appendf(StringBuffer *sbuf, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     sbuf_vappendf(sbuf, fmt, ap);
     va_end(ap);
+}
+
+size_t sbuf_get_backing_size(StringBuffer *sbuf) {
+    return sbuf->size;
 }
 
 char* sbuf_detach(StringBuffer *sbuf) {
@@ -92,7 +99,7 @@ void sbuf_truncate(StringBuffer *sbuf, size_t len) {
 static void sbuf_grow(StringBuffer *sbuf, size_t len) {
     size_t new_size = sbuf->size;
     //multiply by 2 the size until it can hold sizeof(len) new data. Multiplying, instead of growing at a constant rate, ensures constant amortized time complexity
-    while(new_size < sbuf->size + len)
+    while(new_size < sbuf->len + len)
         new_size <<= 1;
     char *new_buff = realloc(sbuf->buff, new_size);
     if(!new_buff) {

@@ -17,12 +17,6 @@ struct Dir {
 
 Dir* open_dir(const char *path, int *err) {
 	*err = 0;
-	if(!(strlen(path) < 7) && strlen(path) - 7 > MAX_PATH_LENGTH) {
-		SetLastError(ERROR_MRM_FILEPATH_TOO_LONG);
-		set_err(err);
-		return NULL;
-	}
-
 	Dir *dir = malloc(sizeof(Dir));
 	if(!dir) {
 		SetLastError(ERROR_OUTOFMEMORY);
@@ -113,15 +107,15 @@ int change_dir(const char *path) {
 }
 
 int get_cwd(char *buff, size_t len) {
-	if(!GetCurrentDirectory(len, buff)) {
-		return 1;
-	}
+	int required_len  = GetCurrentDirectory(0, NULL);
+	char *cwd = malloc(required_len);
+	GetCurrentDirectory(required_len, cwd);
 	//covert backslashes to slashes
-	char *str = buff;
+	char *str = cwd;
 	do {
 		if(*str == '\\') *str = '/';
 	} while(*(++str));
-	return 0;
+	return cwd;
 }
 
 static void set_err(int *err) {

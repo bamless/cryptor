@@ -21,12 +21,6 @@ struct Dir {
 
 Dir* open_dir(const char *path, int *err) {
 	*err = 0;
-	if(!(strlen(path) < 1) && strlen(path) - 1 > MAX_PATH_LENGTH) {
-		errno = ENAMETOOLONG;
-		set_err(err);
-		return NULL;
-	}
-
 	DIR *unix_dir = opendir(path);
 	if(!unix_dir) {
 		set_err(err);
@@ -113,8 +107,14 @@ int change_dir(const char *path) {
 	return chdir(path);
 }
 
-int get_cwd(char *buff, size_t len) {
-	return getcwd(buff, len) ? 0 : 1;
+char* get_cwd() {
+	int size = 1024;
+	char *pwd = malloc(size);
+	while(!getcwd(pwd, size) && errno == ERANGE) {
+		size *= 2;
+		pwd = realloc(pwd, size);
+	}
+	return pwd;
 }
 
 static void set_err(int *err) {
