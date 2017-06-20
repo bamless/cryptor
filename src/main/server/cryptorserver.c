@@ -1,6 +1,5 @@
 #include "cryptorserver.h"
 #include "socket.h"
-#include "utilsCompat.h"
 #include "logging.h"
 #include "error.h"
 #include "stringbuf.h"
