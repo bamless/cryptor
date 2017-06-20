@@ -7,8 +7,6 @@
 #include "files.h"
 #include "protocol.h"
 
-#include "fileUtils.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
