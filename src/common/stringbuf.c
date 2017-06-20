@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 struct StringBuffer {
     char *buff;     /*The backing char array*/
@@ -13,7 +14,7 @@ static void sbuf_grow(StringBuffer *sbuf, size_t len);
 
 StringBuffer* sbuf_create() {
     StringBuffer *sb = malloc(sizeof(StringBuffer));
-    sb->buff = malloc(sizeof(char) * 64);
+    sb->buff = malloc(64);
     sb->size = 64;
     sb->len = 0;
     sb->buff[0] = '\0';
@@ -55,6 +56,29 @@ void sbuf_append(StringBuffer *sbuf, const char *str, size_t len) {
     sbuf->buff[sbuf->len] = '\0';
 }
 
+static void sbuf_vappendf(StringBuffer *sb, const char *fmt, va_list ap) {
+    int num_required;
+    while ((num_required = vsnprintf(sb->buff+sb->len, sb->size-sb->len, fmt, ap)) >= sb->size-sb->len)
+        sbuf_grow(sb, num_required + 1);
+    sb->len += num_required;
+}
+
+void sbuf_printf(StringBuffer *sbuf, const char *fmt, ...) {
+    sbuf_clear(sbuf);
+    va_list ap;
+    va_start(ap, fmt);
+    sbuf_vappendf(sbuf, fmt, ap);
+    va_end(ap);
+}
+
+char* sbuf_detach(StringBuffer *sbuf) {
+    char *buf = sbuf->buff;
+    sbuf->buff = malloc(64);
+    sbuf->size = 64;
+    sbuf_clear(sbuf);
+    return buf;
+}
+
 void sbuf_appendstr(StringBuffer *sbuf, const char *str) {
     sbuf_append(sbuf, str, strlen(str));
 }
@@ -70,7 +94,7 @@ static void sbuf_grow(StringBuffer *sbuf, size_t len) {
     //multiply by 2 the size until it can hold sizeof(len) new data. Multiplying, instead of growing at a constant rate, ensures constant amortized time complexity
     while(new_size < sbuf->size + len)
         new_size <<= 1;
-    char *new_buff = realloc(sbuf->buff, sizeof(char) * new_size);
+    char *new_buff = realloc(sbuf->buff, new_size);
     if(!new_buff) {
         fprintf(stderr, "%s\n", "Error: stringbuf: out of memory");
         exit(1);
