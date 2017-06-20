@@ -56,24 +56,6 @@ void sbuf_append(StringBuffer *sbuf, const char *str, size_t len) {
     sbuf->buff[sbuf->len] = '\0';
 }
 
-static void sbuf_vappendf(StringBuffer *sb, const char *fmt, va_list ap) {
-    int num_required;
-    va_list copy;
-    va_copy(copy, ap);
-    while ((num_required = vsnprintf(sb->buff+sb->len, sb->size-sb->len, fmt, copy)) >= sb->size-sb->len) {
-        sbuf_grow(sb, num_required + 1);
-        va_copy(copy, ap);
-    }
-    sb->len += num_required;
-}
-
-void sbuf_appendf(StringBuffer *sbuf, const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    sbuf_vappendf(sbuf, fmt, ap);
-    va_end(ap);
-}
-
 size_t sbuf_get_backing_size(StringBuffer *sbuf) {
     return sbuf->size;
 }

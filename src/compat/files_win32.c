@@ -24,14 +24,15 @@ Dir* open_dir(const char *path, int *err) {
 		return NULL;
 	}
 
-	char szDir[MAX_PATH_LENGTH];
+	size_t len = strlen(path) + 7; //+7 for the \\?\, \* and NUL
+	char *szDir = malloc(len);
 	strcpy(szDir, "\\\\?\\");
 	strcat(szDir, path);
 	strcat(szDir, "\\*");
 	fix_slash(szDir);
 
-	WCHAR wSzDir[MAX_PATH_LENGTH];
-	MultiByteToWideChar(CP_UTF8, 0, szDir, MAX_PATH_LENGTH, wSzDir, MAX_PATH_LENGTH);
+	WCHAR *wSzDir = malloc(sizeof(WCHAR) * len);
+	MultiByteToWideChar(CP_UTF8, 0, szDir, len, wSzDir, len);
 
 	dir->find = FindFirstFileW(wSzDir, &dir->ffd);
 	if(dir->find == INVALID_HANDLE_VALUE) {
@@ -40,6 +41,8 @@ Dir* open_dir(const char *path, int *err) {
 		return NULL;
 	}
 	dir->b_first = 1;
+	free(szDir);
+	free(wSzDir);
 	return dir;
 }
 
@@ -106,7 +109,7 @@ int change_dir(const char *path) {
 	return SetCurrentDirectory(path) ? 0 : 1;
 }
 
-int get_cwd(char *buff, size_t len) {
+char* get_cwd() {
 	int required_len  = GetCurrentDirectory(0, NULL);
 	char *cwd = malloc(required_len);
 	GetCurrentDirectory(required_len, cwd);

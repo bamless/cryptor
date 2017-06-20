@@ -13,14 +13,21 @@ static int read_response(Socket sock);
 
 int cryptor_send_command(Socket sock, const char *cmd, unsigned int seed, const char *path) {
     if(strcmp(cmd, LSTF) == 0 || strcmp(cmd, LSTR) == 0) {
-        //send command
         if(send(sock, cmd, 4, 0) == -1) {
             perr_sock("Error: send_command");
             close_and_exit(sock);
         }
     } else if(strcmp(cmd, ENCR) == 0 || strcmp(cmd, DECR) == 0) {
         StringBuffer *cmdline = sbuf_create();
-        sbuf_appendf(cmdline, "%s %u %s\r\n", cmd, seed, path);
+        char seedstr[11];
+        snprintf(seedstr, sizeof(seedstr), "%u", seed);
+
+        sbuf_appendstr(cmdline, cmd);
+        sbuf_appendstr(cmdline, " ");
+        sbuf_appendstr(cmdline, seedstr);
+        sbuf_appendstr(cmdline, " ");
+        sbuf_appendstr(cmdline, path);
+
         if(send(sock, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), 0)) {
             perr_sock("Error: send_command");
             close_and_exit(sock);
