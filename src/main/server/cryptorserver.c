@@ -35,7 +35,7 @@ void cryptor_handle_connection(Socket client) {
 
 /* Sends the line "fsize file_path\r\n" for every file in the PWD. If is_recursive
  * is non-zero then then it explores recursevely all the subfolders.*/
-static void send_list(Socket s, const char *path, StringBuffer *sb, int is_recursive) {
+static void send_list(Socket s, const char *path, int is_recursive) {
     int err;
     Dir *dir = open_dir(path, &err);
     if(!dir || err) return;
@@ -56,7 +56,7 @@ static void send_list(Socket s, const char *path, StringBuffer *sb, int is_recur
                 send(s, line, written, 0);
             }
             if(entry.type == DIRECTORY && is_recursive) {
-                list(s, full_entry_path, sb, is_recursive);
+                send_list(s, full_entry_path, is_recursive);
             }
         }
     }
@@ -71,7 +71,7 @@ static void handle_list_commands(Socket client, int is_recursive) {
     }
 
     send(client, RETMORE, 3, 0);
-    send_list(client, pwd, sb, is_recursive); //sends the directory list
+    send_list(client, pwd, is_recursive); //sends the directory list
     send(client, "\r\n", 2, 0); //signal end of output (\r\n\r\n)
 }
 
