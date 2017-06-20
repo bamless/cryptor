@@ -38,14 +38,47 @@ int cryptor_send_command(Socket sock, const char *cmd, unsigned int seed, const 
     return read_response(sock);
 }
 
+/*
+ * Returns further server output in the StringBuffer sb
+ */
 void cryptor_read_more(Socket server, StringBuffer *sb) {
-    char buff[256];
+    char buff[512];
     ssize_t bytes_recv;
     while((bytes_recv = recv(server, buff, sizeof(buff), 0)) > 0) {
         sbuf_append(sb, buff, bytes_recv);
         if(sbuf_endswith(sb, "\r\n\r\n")) break; //\r\n\r\n signals the end of the output as per protocol spec.
     }
     if(bytes_recv <= 0) perr_sock("Error");
+}
+
+/*
+ * Prints further server output to stdout
+ */
+void cryptor_print_more(Socket server) {
+    char buff[512 + 1];
+    //the last 4 bytes received from the server (used to test \r\n\r\n for output end)
+    char last[5];
+    memset(last, '\0', 5);
+
+    ssize_t bytes_recv;
+    while((bytes_recv = recv(server, buff, sizeof(buff) - 1, 0)) > 0) {
+        //print the received output to stdout
+        buff[bytes_recv] = '\0';
+        printf("%s", buff);
+
+        //append the last bytes received to last while shifting to the left
+        for(int i = 4; i > 0; i--) {
+            int lst = bytes_recv - i;
+            if(lst < 0) continue;
+            for(int j = 1; j < 4; j++) last[j - 1] = last[j];
+            last[3] = buff[lst];
+        }
+        if(strcmp(last, "\r\n\r\n") == 0) {
+            printf("%s\n", "break"); //TODO: remove
+            break; //\r\n\r\n signals the end of the output as per protocol spec.
+        }
+    }
+    if(bytes_recv < 0) perr_sock("Error");
 }
 
 Socket init_connection(unsigned long addr, u_short port) {

@@ -56,9 +56,9 @@ INCLUDES_CLIENT = -I$(SRC_MAIN)/client
 #Linker flags
 LDFLAGS =
 # Compiler flags
-CFLAGS = -Wall -Werror
+CFLAGS = -Wall
 # Libraries
-LIBS =
+LIBS = -lm
 
 # Source extension
 SRC_EXT = c

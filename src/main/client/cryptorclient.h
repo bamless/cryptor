@@ -26,11 +26,18 @@ Socket init_connection(unsigned long addr, u_short port);
 int cryptor_send_command(Socket server, const char *cmd, unsigned int seed, const char *path);
 
 /*
- * Reads further output from the server. This function should be called only if
- * the return code from a command is RETMORE (i.e. 300).
+ * Reads further output from the server and returns it in sb.
+ * This function should be called only if the return code from a command is
+ * RETMORE (i.e. 300).
  * @arg server a socket connect()ed to a server running the protocol.
  * @arg sb the string buffer that will hold the output
  */
 void cryptor_read_more(Socket server, StringBuffer *sb);
+/*
+ * Prints further output from the server to stdout. This function should be called only if
+ * the return code from a command is RETMORE (i.e. 300).
+ * @arg server a socket connect()ed to a server running the protocol.
+ */
+void cryptor_print_more(Socket server);
 
 #endif

@@ -7,25 +7,28 @@
 #include "stringbuf.h"
 #include "fileUtils.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include <string.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 int main() {
-	StringBuffer *sb = sbuf_create();
-	sbuf_appendstr(sb, "HeyTest");
-	logf("%d\n", sbuf_endswith(sb, "Test"));
-	int err;
-	Dir *dir = open_dir("D:/Fabrizio\\Musica", &err);
-	if(!dir) {
-		perr("Error: recursive_explore");
+	fsize_t s;
+	get_file_size("/mnt/HDD/Fabrizio/Pictures/pswd.txt", &s);
+	printf("%"PRIu64"\n", (intmax_t) s);
+	printf("%f\n", ceil(s/4.) * 4);
+	//int fd = open("/home/fabrizio/prova.txt", O_RDWR);
+	int fd = open("/mnt/HDD/Fabrizio/Pictures/pswd.txt", O_RDWR);
+	if(fd < 0) logs("error open");
+	int key = 25678;
+	int *map = (int *) mmap(NULL, ceil(s/4.) * 4, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if(!map) logs("error mmap");
+	for(int i = 0; i < ceil(s/4.); i++) {
+		map[i] ^= key;
 	}
-	DirEntry entry;
-	while(has_next(dir)) {
-		next_dir(dir, &entry);
-		if(strcmp(entry.name, ".") != 0 && strcmp(entry.name, "..") != 0) {
-			logs(entry.name);
-		}
-	}
-	close_dir(dir);
 }

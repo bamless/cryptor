@@ -48,15 +48,12 @@ int main(int argc, char **argv) {
 			break;
 	}
 
-	logf("Server responded with code %d\n", resp_code);
+	logsf("Server responded with code %d\n", resp_code);
 
 	//If the response of the server is 300 (i.e. the server will send more output) read the remaining output
 	if(resp_code == RETMORE_INT) {
 		StringBuffer *sb = sbuf_create();
-		cryptor_read_more(sock, sb);
-
-		//print the received output
-		printf("%s", sbuf_get_backing_buf(sb));
+		cryptor_print_more(sock);
 		sbuf_destroy(sb);
 	}
 

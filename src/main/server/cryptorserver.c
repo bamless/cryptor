@@ -33,9 +33,9 @@ void cryptor_handle_connection(Socket client) {
     socket_close(client);
 }
 
-/* Appends the line "fsize file_path\r\n" in the string buffer for every file in the PWD.
- * If is_recursive is non-zero then then it explores recursevely all the subfolders.*/
-static void list(const char *path, StringBuffer *sb, int is_recursive) {
+/* Sends the line "fsize file_path\r\n" for every file in the PWD. If is_recursive
+ * is non-zero then then it explores recursevely all the subfolders.*/
+static void send_list(Socket s, const char *path, StringBuffer *sb, int is_recursive) {
     int err;
     Dir *dir = open_dir(path, &err);
     if(!dir || err) return;
@@ -44,23 +44,19 @@ static void list(const char *path, StringBuffer *sb, int is_recursive) {
     while(has_next(dir)) {
         next_dir(dir, &entry);
         if(strcmp(entry.name, ".") != 0 && strcmp(entry.name, "..") != 0) {
+            char full_entry_path[MAX_PATH_LENGTH + 1];
+            snprintf(full_entry_path, MAX_PATH_LENGTH, "%s/%s", path, entry.name);
+            full_entry_path[MAX_PATH_LENGTH] = '\0'; //just in case it was truncated
             if(entry.type == NFILE) {
-                char full_file_path[MAX_PATH_LENGTH];
-                snprintf(full_file_path, sizeof(full_file_path), "%s/%s", path, entry.name);
                 fsize_t fsize;
-                if(get_file_size(full_file_path, &fsize)) continue;
-                char fsize_str[20]; //20 the max length of 64 bit int in base 10
-                snprintf(fsize_str, sizeof(fsize_str), "%"PRIu64" ", (uintmax_t) fsize); //we can safely cast to uintmax_t because get_file_size guarantees a result >= 0
-                sbuf_appendstr(sb, fsize_str);
-                sbuf_appendstr(sb, path);
-                sbuf_appendstr(sb, "/");
-                sbuf_appendstr(sb, entry.name);
-                sbuf_appendstr(sb, "\r\n");
+                if(get_file_size(full_entry_path, &fsize)) continue;
+                char line[MAX_PATH_LENGTH + 20 + 3]; //20 the max length of 64 bit int in base 10, 3 for \r\n and NUL term
+                //we can safely cast to uintmax_t because get_file_size guarantees a result >= 0
+                int written = snprintf(line, sizeof(line) - 1, "%"PRIu64" %s\r\n", (uintmax_t) fsize, full_entry_path);
+                send(s, line, written, 0);
             }
             if(entry.type == DIRECTORY && is_recursive) {
-                char subdir_path[MAX_PATH_LENGTH];
-                snprintf(subdir_path, MAX_PATH_LENGTH, "%s/%s", path, entry.name);
-                list(subdir_path, sb, is_recursive);
+                list(s, full_entry_path, sb, is_recursive);
             }
         }
     }
@@ -68,22 +64,15 @@ static void list(const char *path, StringBuffer *sb, int is_recursive) {
 }
 
 static void handle_list_commands(Socket client, int is_recursive) {
-    StringBuffer *sb = sbuf_create();
     char pwd[MAX_PATH_LENGTH + 1];
     if(get_cwd(pwd, sizeof(pwd))) {
         send(client, RETERR, 3, 0);
         return;
     }
 
-    list(pwd, sb, is_recursive);
-    if(strcmp("", sbuf_get_backing_buf(sb)) == 0) { //the pwd is empty
-        send(client, RETERR, 3, 0);
-    } else {
-        send(client, RETMORE, 3, 0);
-        sbuf_appendstr(sb, "\r\n");
-        send(client, sbuf_get_backing_buf(sb), sbuf_get_len(sb), 0);
-    }
-    sbuf_destroy(sb);
+    send(client, RETMORE, 3, 0);
+    send_list(client, pwd, sb, is_recursive); //sends the directory list
+    send(client, "\r\n", 2, 0); //signal end of output (\r\n\r\n)
 }
 
 Socket init_server_socket(u_short port) {
