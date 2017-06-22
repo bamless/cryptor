@@ -55,8 +55,8 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
                 }
                 sbuf_clear(cmdline);
                 char fsizestr[21]; //20 max size of 64 bit integer + 1 for NUL
-                snprintf(fsizestr, sizeof(fsizestr), "%"PRIu64" ", (uintmax_t) fsize);
                 //we can safely cast to uintmax_t because get_file_size guarantees a result >= 0
+                snprintf(fsizestr, sizeof(fsizestr), "%"PRIu64" ", (uintmax_t) fsize);
                 sbuf_appendstr(cmdline, fsizestr); //the size of the file
                 sbuf_appendstr(cmdline, sbuf_get_backing_buf(path)); //its path
                 sbuf_appendstr(cmdline, "\r\n"); // carriage return and newline
