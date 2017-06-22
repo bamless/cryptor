@@ -44,8 +44,9 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
     while(has_next(dir)) {
         next_dir(dir, &entry);
         if(strcmp(entry.name, ".") != 0 && strcmp(entry.name, "..") != 0) {
-            int orig_len = sbuf_get_len(path);     //save the prev length of the path
-            sbuf_appendstr(path, "/"); //append the entry name to obtain the full path
+            int orig_len = sbuf_get_len(path); //save the prev length of the path
+            //append the entry name to obtain the full path
+            sbuf_appendstr(path, "/");
             sbuf_appendstr(path, entry.name);
             if(entry.type == NFILE) {
                 fsize_t fsize;
@@ -57,7 +58,7 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
                 char fsizestr[21]; //20 max size of 64 bit integer + 1 for NUL
                 //we can safely cast to uintmax_t because get_file_size guarantees a result >= 0
                 snprintf(fsizestr, sizeof(fsizestr), "%"PRIu64" ", (uintmax_t) fsize);
-                
+
                 sbuf_appendstr(cmdline, fsizestr); //the size of the file
                 sbuf_appendstr(cmdline, sbuf_get_backing_buf(path)); //its path
                 sbuf_appendstr(cmdline, "\r\n"); // carriage return and newline
