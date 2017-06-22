@@ -35,7 +35,10 @@ void cryptor_handle_connection(Socket client) {
 static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int is_recursive) {
     int err;
     Dir *dir = open_dir(sbuf_get_backing_buf(path), &err);
-    if(!dir || err) return;
+    if(!dir || err) {
+        perr("Error send_list");
+        return;
+    }
 
     DirEntry entry;
     while(has_next(dir)) {
@@ -57,7 +60,7 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
                 sbuf_appendstr(cmdline, fsizestr); //the size of the file
                 sbuf_appendstr(cmdline, sbuf_get_backing_buf(path)); //its path
                 sbuf_appendstr(cmdline, "\r\n"); // carriage return and newline
-                
+
                 send(s, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), 0);
             }
             if(entry.type == DIRECTORY && is_recursive) {

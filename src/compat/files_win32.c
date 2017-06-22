@@ -11,7 +11,7 @@ static void fix_slash(char *str);
 
 struct Dir {
 	HANDLE find;
-	WIN32_FIND_DATAW ffd;
+	WIN32_FIND_DATA ffd;
 	int b_first;
 };
 
@@ -31,10 +31,7 @@ Dir* open_dir(const char *path, int *err) {
 	strcat(szDir, "\\*");
 	fix_slash(szDir);
 
-	WCHAR *wSzDir = malloc(sizeof(WCHAR) * len);
-	MultiByteToWideChar(CP_UTF8, 0, szDir, len, wSzDir, len);
-
-	dir->find = FindFirstFileW(wSzDir, &dir->ffd);
+	dir->find = FindFirstFile(szDir, &dir->ffd);
 	if(dir->find == INVALID_HANDLE_VALUE) {
 		set_err(err);
 		free(dir);
@@ -42,7 +39,6 @@ Dir* open_dir(const char *path, int *err) {
 	}
 	dir->b_first = 1;
 	free(szDir);
-	free(wSzDir);
 	return dir;
 }
 
@@ -57,7 +53,7 @@ int has_next(Dir *dir) {
 		dir->b_first = 0;
 		return 1;
 	}
-	return FindNextFileW(dir->find, &dir->ffd) ? 1 : 0;
+	return FindNextFile(dir->find, &dir->ffd) ? 1 : 0;
 }
 
 void next_dir(Dir *dir, DirEntry *entry) {
@@ -65,7 +61,7 @@ void next_dir(Dir *dir, DirEntry *entry) {
 		elog("Error: has_next must be called at least once befor next_dir");
 		return;
 	}
-	WideCharToMultiByte(CP_UTF8, 0, dir->ffd.cFileName, 256, entry->name, 256, NULL, NULL);
+	memcpy(entry->name, dir->ffd.cFileName, 256);
 	if(dir->ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 		entry->type = DIRECTORY;
 	} else {

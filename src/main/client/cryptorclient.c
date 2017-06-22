@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 static void close_and_exit(Socket sock);
 static int read_response(Socket sock);
 
@@ -70,12 +72,10 @@ void cryptor_print_more(Socket server) {
         printf("%s", buff);
 
         //append the last bytes received to last while shifting to the left
-        for(int i = 4; i > 0; i--) {
-            int lst = bytes_recv - i;
-            if(lst < 0) continue;
-            for(int j = 1; j < 4; j++) last[j - 1] = last[j];
-            last[3] = buff[lst];
-        }
+        int shift = 4 - MAX(4 - bytes_recv, 0);
+        memcpy(last , last + shift, 4 - shift);
+        memcpy(last + (4 - shift), buff + bytes_recv - shift, shift);
+        
         if(strcmp(last, "\r\n\r\n") == 0) {
             printf("%s\n", "break"); //TODO: remove
             break; //\r\n\r\n signals the end of the output as per protocol spec.
