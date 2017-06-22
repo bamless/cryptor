@@ -75,7 +75,7 @@ void cryptor_print_more(Socket server) {
         int shift = 4 - MAX(4 - bytes_recv, 0);
         memcpy(last , last + shift, 4 - shift);
         memcpy(last + (4 - shift), buff + bytes_recv - shift, shift);
-        
+
         if(strcmp(last, "\r\n\r\n") == 0) {
             printf("%s\n", "break"); //TODO: remove
             break; //\r\n\r\n signals the end of the output as per protocol spec.
@@ -109,6 +109,7 @@ static int read_response(Socket sock) {
     char resp[4];
     int received;
     memset(resp, '\0', sizeof(resp));
+    
     if((received = recv(sock, resp, sizeof(resp) - 1, MSG_WAITALL)) == -1) {
         perr_sock("Error: send_command");
         close_and_exit(sock);
