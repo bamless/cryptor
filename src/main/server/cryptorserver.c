@@ -100,17 +100,17 @@ Socket init_server_socket(u_short port) {
 
 	Socket server_sock = socket(AF_INET, SOCK_STREAM, 0);
 	if(!is_socket_valid(server_sock)) {
-		perr_sock("Error: creating socket");
+		perr_sock("Error creating socket");
 		socket_cleanup();
 		exit(1);
 	}
 	if(bind(server_sock, (struct sockaddr *) &server, sizeof(server))) {
-		perr_sock("Error: bind server");
+		perr_sock("Error bind");
 		socket_cleanup();
 		exit(1);
 	}
 	if(listen(server_sock, SOMAXCONN)) {
-		perr_sock("Error: bind server");
+		perr_sock("Error bind");
 		socket_cleanup();
 		exit(1);
 	}

@@ -18,7 +18,7 @@
 
 int main() {
 	fsize_t s;
-	if(get_file_size("D:/Fabrizio/Pictures/crackstation.txt", &s)) {
+	if(get_file_size("D:/Fabrizio/Pictures/pswd.txt", &s)) {
 		perr("error get_file_size");
 		exit(1);
 	}
@@ -28,7 +28,7 @@ int main() {
 
 	printf("%"PRIu64"\n", (intmax_t) s);
 
-	HANDLE hFile = CreateFile("D:/Fabrizio/Pictures/crackstation.txt", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hFile = CreateFile("D:/Fabrizio/Pictures/pswd.txt", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	HANDLE mapping = CreateFileMapping(hFile, NULL, PAGE_READWRITE, (DWORD) (s >> 32), (DWORD) s, NULL);
 	if(mapping == NULL) {
 		perr("Error CreateFileMapping");

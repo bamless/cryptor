@@ -67,6 +67,7 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 	if(args->host_port == 0) args->host_port = htons(DEFAULT_PORT);
 
 	int c;
+	args->cmd = '\0';
 	switch ((c = getopt(argc, argv, "lRed"))) {
 		case 'l':
 		case 'R':
@@ -94,6 +95,7 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 			usage(argv[0]);
 			break;
 	}
+	if(args->cmd == '\0') usage(argv[0]);
 }
 
 /*

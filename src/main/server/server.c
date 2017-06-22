@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 	Config cfg;
 	init_config(&cfg);
 	parse_args(argc, argv, &cfg);
-
+	
 	if(change_dir(cfg.pwd)) {
 		perr("Error");
 		exit(1);

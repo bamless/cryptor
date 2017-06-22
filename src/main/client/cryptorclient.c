@@ -16,7 +16,7 @@ static int read_response(Socket sock);
 int cryptor_send_command(Socket sock, const char *cmd, unsigned int seed, const char *path) {
     if(strcmp(cmd, LSTF) == 0 || strcmp(cmd, LSTR) == 0) {
         if(send(sock, cmd, 4, 0) == -1) {
-            perr_sock("Error: send_command");
+            perr_sock("Error send_command");
             close_and_exit(sock);
         }
     } else if(strcmp(cmd, ENCR) == 0 || strcmp(cmd, DECR) == 0) {
@@ -31,12 +31,12 @@ int cryptor_send_command(Socket sock, const char *cmd, unsigned int seed, const 
         sbuf_appendstr(cmdline, path);
 
         if(send(sock, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), 0)) {
-            perr_sock("Error: send_command");
+            perr_sock("Error send_command");
             close_and_exit(sock);
         }
         sbuf_destroy(cmdline);
     } else {
-        elog("Error: cryptor_send_command: unknown command");
+        elog("Error cryptor_send_command: unknown command");
         close_and_exit(sock);
     }
 
@@ -98,7 +98,7 @@ Socket init_connection(unsigned long addr, u_short port) {
         close_and_exit(sock);
     }
     if(connect(sock, (struct sockaddr *) &server, sizeof(server))) {
-        perr_sock("Error: bind");
+        perr_sock("Error bind");
         close_and_exit(sock);
     }
     return sock;
@@ -109,9 +109,9 @@ static int read_response(Socket sock) {
     char resp[4];
     int received;
     memset(resp, '\0', sizeof(resp));
-    
+
     if((received = recv(sock, resp, sizeof(resp) - 1, MSG_WAITALL)) == -1) {
-        perr_sock("Error: send_command");
+        perr_sock("Error read_response");
         close_and_exit(sock);
     }
     if(received == 0) {
