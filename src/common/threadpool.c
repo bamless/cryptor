@@ -54,12 +54,10 @@ ThreadPool* threadpool_create(int thread_count) {
 
 static void init_threads(Thread *threads, ThreadPool *tp) {
     thread_lock_mutex(&tp->tp_lock);
-    dlog("Initializing threads...");
     for(int i = 0; i < tp->thread_count; i++) {
         struct wthread_arg *wtarg = malloc(sizeof(struct wthread_arg));
         wtarg->tp = tp;
         wtarg->id = i;
-        dlogf("Initializing thread %d\n", i);
         thread_create(&threads[i], &worker_thread, wtarg);
     }
     thread_unlock_mutex(&tp->tp_lock);
@@ -78,9 +76,9 @@ void threadpool_destroy(ThreadPool *tp, enum shutdown_type type) {
     thread_unlock_mutex(&tp->tp_lock);
 
     //wait for all the threads to finish
-    dlog("Waiting for the threads to shut down...");
-    for(int i = 0; i < tp->thread_count; i++)
+    for(int i = 0; i < tp->thread_count; i++) {
         thread_join(&tp->threads[i]);
+    }
 
     //free all the resources
     thread_destroy_cond(&tp->tasks_cond);
@@ -114,7 +112,6 @@ int threadpool_add_task(ThreadPool *tp, void (*task_func)(void *, int), void *ar
     }
 
     //add the task to the queue
-    dlog("Adding task to the thread pool queue...");
     if(tp->queue_size == 0) {
         tp->tasks_head = task;
     } else {
@@ -139,18 +136,15 @@ static void worker_thread(void *worker_thread_arg) {
         thread_lock_mutex(&tp->tp_lock);
         //if the queue is empty wait on cv
         while((tp->queue_size == 0) && !(tp->shutting)) {
-            dlogf("Thread %d is waiting for tasks\n", id);
             thread_cond_wait(&tp->tasks_cond, &tp->tp_lock);
         }
 
         if(tp->shutting == HARD_SHUTDOWN || (tp->shutting == SOFT_SHUTDOWN && tp->queue_size == 0)) {
-            dlogf("Thread %d is shutting...\n", id);
             thread_unlock_mutex(&tp->tp_lock);
             break;
         }
 
         //obtain task from queue
-        dlogf("Thread %d is obtaining task\n", id);
         ThreadPoolTask *task = tp->tasks_head;
         tp->tasks_head = task->next;
         if(!tp->tasks_head) tp->tasks_tail = NULL;
@@ -162,8 +156,6 @@ static void worker_thread(void *worker_thread_arg) {
         void *args = task->args;
         free(task); //free the task struct
 
-        dlogf("Thread %d is executing task...\n", id);
         (*task_func)(args, id);
-        dlogf("Thread %d done\n", id);
     }
 }

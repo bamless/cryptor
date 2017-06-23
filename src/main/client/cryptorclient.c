@@ -15,7 +15,7 @@ static int read_response(Socket sock);
 
 int cryptor_send_command(Socket sock, const char *cmd, unsigned int seed, const char *path) {
     if(strcmp(cmd, LSTF) == 0 || strcmp(cmd, LSTR) == 0) {
-        if(send(sock, cmd, 4, 0) == -1) {
+        if(send(sock, cmd, 4, 0) < 0) {
             perr_sock("Error send_command");
             close_and_exit(sock);
         }
@@ -30,7 +30,7 @@ int cryptor_send_command(Socket sock, const char *cmd, unsigned int seed, const 
         sbuf_appendstr(cmdline, " ");
         sbuf_appendstr(cmdline, path);
 
-        if(send(sock, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), 0)) {
+        if(send(sock, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), 0) < 0) {
             perr_sock("Error send_command");
             close_and_exit(sock);
         }
@@ -77,7 +77,7 @@ void cryptor_print_more(Socket server) {
         memcpy(last + (4 - shift), buff + bytes_recv - shift, shift);
 
         if(strcmp(last, "\r\n\r\n") == 0) {
-            printf("%s\n", "break"); //TODO: remove
+            dlog("End of output");
             break; //\r\n\r\n signals the end of the output as per protocol spec.
         }
     }

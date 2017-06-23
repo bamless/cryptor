@@ -14,7 +14,7 @@
 //prints a message to standard output only if DEBUG is defined
 #ifdef DEBUG
 #define dlog(msg) logs(msg)
-#define dlogf(format, ...) logf(format, __VA_ARGS__)
+#define dlogf(format, ...) logsf(format, __VA_ARGS__)
 #else
 #define dlog(msg)
 #define dlogf(format, ...)

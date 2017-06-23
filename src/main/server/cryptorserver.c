@@ -1,12 +1,13 @@
 #include "cryptorserver.h"
 #include "socket.h"
-#include "logging.h"
 #include "error.h"
 #include "stringbuf.h"
 #include "files.h"
+#include "logging.h"
 #include "protocol.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
 
@@ -16,6 +17,8 @@ void cryptor_handle_connection(Socket client) {
     char cmd[5];
     memset(cmd, '\0', sizeof(cmd));
     recv(client, cmd, sizeof(cmd) - 1, MSG_WAITALL);
+
+    dlogf("Received command %s\n", cmd);
 
     if(strcmp(cmd, LSTF) == 0) {
         handle_list_commands(client, 0);

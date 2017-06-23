@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 			break;
 	}
 
-	logsf("Server responded with code %d\n", resp_code);
+	dlogf("Server responded with code %d\n", resp_code);
 
 	//If the response of the server is 300 (i.e. the server will send more output) read the remaining output
 	if(resp_code == RETMORE_INT) {

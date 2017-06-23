@@ -22,7 +22,7 @@
 int main() {
 
 	int err;
-	File file = open_file("D:/Fabrizio/Pictures/pswd.txt", READ | WRITE, &err);
+	File file = open_file("/home/fabrizio/tux.bmp", READ | WRITE, &err);
 	if(err) {
 		perr("Error");
 		return 1;
@@ -44,7 +44,7 @@ int main() {
 
 	//Encrypt
 
-	int key = 25678; //key for testing
+	int key[8] = {214748347, 5465489, 27933456, 940211, 1274325, 786888, 5468392, 7876626}; //key for testing
 
 	MemoryMap *mmap = memory_map(file, 0, s);
 	if(!mmap) perr("Error");
@@ -68,7 +68,7 @@ int main() {
 
 		int *chunk = &map[(int) ceil(from/4.)];
 		for(int i = 0; i < len; i++) {
-			chunk[i] ^= key;
+			chunk[i] ^= key[i % 8];
 		}
 	}
 

@@ -61,11 +61,11 @@ int main(int argc, char **argv) {
 }
 
 static void threadpool_handle_connection(void *incoming_conn, int id) {
-	logsf("Thread %d is handling connection\n", id);
+	dlogf("Thread %d is handling connection\n", id);
 	Socket client = *((Socket *) incoming_conn);
 	free(incoming_conn);
 	cryptor_handle_connection(client);
-	logsf("Thread %d done\n", id);
+	dlogf("Thread %d done\n", id);
 }
 
 static void parse_args(int argc, char **argv, Config *cfg) {
