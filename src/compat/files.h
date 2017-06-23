@@ -4,10 +4,13 @@
 
 #ifdef __unix
 #include <sys/types.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 typedef off_t fsize_t;
-#endif
-#ifdef _WIN32
+#elif _WIN32
 #include <inttypes.h>
+#include <windows.h>
 typedef uint64_t fsize_t;
 #endif
 
@@ -46,12 +49,31 @@ void next_dir(Dir *dir, DirEntry *entry);
 
 // End directory API
 
-/*Deletes the file at path. Returns 0 on success, nonzero on failure*/
-int delete_file(const char *path);
+#ifdef __unix
+typedef int File;
+#elif _WIN32
+typedef HANDLE File;
+#endif
+
+#define READ 1
+#define WRITE 2
+
+/*Opens an *existing* file at path path. If the file is not found or an error occurs
+ *err is nonzero and the return value of File is undefined.*/
+File open_file(const char *path, int mode, int *err);
+int close_file(File file);
+
+int lock_file(File f, fsize_t off, fsize_t len);
+int unlock_file(File f, fsize_t off, fsize_t len);
+
 /*Returns the size of the file at path. the value returned by this funtion in fsize
 is guaranteed to be >= 0. The actual type of fsize_t is implementation defined.
 @return 0 on success and fsize is set to the file size. non 0 error code on failure*/
 int get_file_size(const char *path, fsize_t *fsize);
+int fget_file_size(File f, fsize_t *fsize);
+
+/*Deletes the file at path. Returns 0 on success, nonzero on failure*/
+int delete_file(const char *path);
 /*Changes the working directory of the process. Returns 0 on success, non 0 on failure*/
 int change_dir(const char *path);
 /*Returns the pwd absolute path. The buffer is malloc'd so the caller

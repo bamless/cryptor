@@ -22,9 +22,9 @@ void cryptor_handle_connection(Socket client) {
     } else if(strcmp(cmd, LSTR) == 0) {
         handle_list_commands(client, 1);
     } else if(strcmp(cmd, ENCR) == 0) {
-        send(client, RETOK, 3, 0); //TODO: implement
+        send(client, RETOK, 3, MSG_NOSIGNAL); //TODO: implement
     } else if(strcmp(cmd, DECR) == 0) {
-        send(client, RETOK, 3, 0); //TODO: implement
+        send(client, RETOK, 3, MSG_NOSIGNAL); //TODO: implement
     }
 
     socket_close(client);
@@ -63,7 +63,9 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
                 sbuf_appendstr(cmdline, sbuf_get_backing_buf(path)); //its path
                 sbuf_appendstr(cmdline, "\r\n"); // carriage return and newline
 
-                send(s, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), 0);
+                if(send(s, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), MSG_NOSIGNAL) < 0) {
+                        return;
+                }
             }
             if(entry.type == DIRECTORY && is_recursive) {
                 send_list(s, path, cmdline, is_recursive);
@@ -82,9 +84,9 @@ static void handle_list_commands(Socket client, int is_recursive) {
     sbuf_appendstr(path, pwd);
     free(pwd);
 
-    send(client, RETMORE, 3, 0);
+    send(client, RETMORE, 3, MSG_NOSIGNAL);
     send_list(client, path, cmdline, is_recursive); //sends the directory list
-    send(client, "\r\n", 2, 0); //signal end of output (\r\n\r\n)
+    send(client, "\r\n", 2, MSG_NOSIGNAL); //signal end of output (\r\n\r\n)
 
     sbuf_destroy(path);
     sbuf_destroy(cmdline);

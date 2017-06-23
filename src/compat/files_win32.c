@@ -69,6 +69,53 @@ void next_dir(Dir *dir, DirEntry *entry) {
 	}
 }
 
+File open_file(const char *path, int mode, int *err) {
+	*err = 0;
+	DWORD acc = 0;
+	DWORD share = 0;
+	if(mode & READ) {
+		acc |= GENERIC_READ;
+		share |= FILE_SHARE_READ;
+	}
+	if(mode & WRITE) {
+		acc |= GENERIC_WRITE;
+		share |= FILE_SHARE_WRITE;
+	}
+	File f = CreateFile(path, acc, share, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if(f == INVALID_HANDLE_VALUE) {
+		set_err(err);
+		return INVALID_HANDLE_VALUE;
+	}
+	return f;
+}
+
+int close_file(File file) {
+	if(!CloseHandle(file)) {
+		int err = 0;
+		set_err(&err);
+		return err;
+	}
+	return 0;
+}
+
+int lock_file(File f, fsize_t off, fsize_t len) {
+	if(!LockFile(f, (DWORD) off, (DWORD) (off >> 32), (DWORD) len, (DWORD) (len >> 32))) {
+		int err = 0;
+		set_err(&err);
+		return err;
+	}
+	return 0;
+}
+
+int unlock_file(File f, fsize_t off, fsize_t len) {
+	if(!UnlockFile(f, (DWORD) off, (DWORD) (off >> 32), (DWORD) len, (DWORD) (len >> 32))) {
+		int err = 0;
+		set_err(&err);
+		return err;
+	}
+	return 0;
+}
+
 int delete_file(const char *path) {
 	if(!DeleteFile((LPCTSTR) path)) {
 		int err = 0;
@@ -87,16 +134,20 @@ static void fix_slash(char *str) {
 
 int get_file_size(const char *path, fsize_t *fsize) {
 	int err = 0;
-	DWORD dwFileSizeLow = 0;
-	DWORD dwFileSizeHigh = 0;
 	HANDLE hFile = CreateFile(path, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if(hFile == INVALID_HANDLE_VALUE) {
 		set_err(&err);
 		return err;
 	}
-
-	dwFileSizeLow = GetFileSize(hFile, &dwFileSizeHigh);
+	fget_file_size(hFile, fsize);
 	CloseHandle(hFile);
+	return 0;
+}
+
+int fget_file_size(File f, fsize_t *fsize) {
+	DWORD dwFileSizeLow = 0;
+	DWORD dwFileSizeHigh = 0;
+	dwFileSizeLow = GetFileSize(f, &dwFileSizeHigh);
  	*fsize = (((fsize_t) dwFileSizeHigh) << 32) | dwFileSizeLow; //We are guaranteed by the WinAPI that DWORD is always 32 bit
 	return 0;
 }

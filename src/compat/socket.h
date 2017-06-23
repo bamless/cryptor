@@ -29,6 +29,8 @@ typedef int Socket;
 typedef SOCKET Socket;
 typedef int socklen_t; // needed in roder to use accept in a portable way (avoids compiler warnings)
 
+#define MSG_NOSIGNAL 0 //option needed to stop the soket from sending sigpipes on linux
+
 #define socket_startup()  do { \
         WSADATA data; \
         if(WSAStartup(MAKEWORD(2,2), &data)) { \

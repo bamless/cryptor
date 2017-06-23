@@ -84,6 +84,32 @@ void next_dir(Dir *dir, DirEntry *entry) {
 	entry->name[255] = '\0'; //null terminate just in case strncpy truncates
 }
 
+File open_file(const char *path, int mode,int *err) {
+	int flags = 0; *err = 0;
+	if((mode & READ) && (mode & WRITE))
+		flags |= O_RDWR;
+	else if(mode & READ)
+		flags |= O_RDONLY;
+	else if(mode & WRITE)
+		flags |= O_WRONLY;
+
+	int file = open(path, flags);
+	if(file < 0) {
+		set_err(err);
+		return -1;
+	}
+	return file;
+}
+
+int close_file(File file) {
+	if(close(file)) {
+		int err = 0;
+		set_err(&err);
+		return err;
+	}
+	return 0;
+}
+
 int delete_file(const char *path) {
 	if(unlink(path)) {
 		int err = 0;
@@ -100,6 +126,48 @@ int get_file_size(const char *path, fsize_t *fsize) {
 		return err;
 	}
 	*fsize = file_stat.st_size;
+	return 0;
+}
+
+int fget_file_size(File f, fsize_t *fsize) {
+	struct stat file_stat; int err = 0;
+	if(fstat(f, &file_stat)) {
+		set_err(&err);
+		return err;
+	}
+	*fsize = file_stat.st_size;
+	return 0;
+}
+
+int lock_file(File f, fsize_t off, fsize_t len) {
+	struct flock lock;
+	lock.l_type = F_WRLCK;
+	lock.l_whence = SEEK_SET;
+	lock.l_start = off;
+	lock.l_len = len;
+	lock.l_pid = getpid();
+
+ 	if(fcntl(f, F_SETLK, &lock)) {
+		int err = 0;
+		set_err(&err);
+		return err;
+	}
+	return 0;
+}
+
+int unlock_file(File f, fsize_t off, fsize_t len) {
+	struct flock lock;
+	lock.l_type = F_UNLCK;
+	lock.l_whence = SEEK_SET;
+	lock.l_start = off;
+	lock.l_len = len;
+	lock.l_pid = getpid();
+
+ 	if(fcntl(f, F_SETLK, &lock)) {
+		int err = 0;
+		set_err(&err);
+		return err;
+	}
 	return 0;
 }
 

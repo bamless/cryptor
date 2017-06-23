@@ -5,11 +5,14 @@
 #include "error.h"
 #include "files.h"
 #include "stringbuf.h"
+#include "mmap.h"
 
+#include <omp.h>
 #include <math.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#include <windows.h>
+// #include <windows.h>
+
 // #include <sys/mman.h>
 // #include <unistd.h>
 // #include <sys/types.h>
@@ -17,52 +20,64 @@
 // #include <fcntl.h>
 
 int main() {
+
+	int err;
+	File file = open_file("D:/Fabrizio/Pictures/pswd.txt", READ | WRITE, &err);
+	if(err) {
+		perr("Error");
+		return 1;
+	}
+
 	fsize_t s;
-	if(get_file_size("D:/Fabrizio/Pictures/pswd.txt", &s)) {
+	if(fget_file_size(file, &s)) {
 		perr("error get_file_size");
 		exit(1);
 	}
+
 	printf("%"PRIu64"\n", (intmax_t) s);
 
 	s = ceil(s/4.) * 4;
 
 	printf("%"PRIu64"\n", (intmax_t) s);
 
-	HANDLE hFile = CreateFile("D:/Fabrizio/Pictures/pswd.txt", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	HANDLE mapping = CreateFileMapping(hFile, NULL, PAGE_READWRITE, (DWORD) (s >> 32), (DWORD) s, NULL);
-	if(mapping == NULL) {
-		perr("Error CreateFileMapping");
-		exit(1);
+	lock_file(file, 0, s);
+
+	//Encrypt
+
+	int key = 25678; //key for testing
+
+	MemoryMap *mmap = memory_map(file, 0, s);
+	if(!mmap) perr("Error");
+
+	int *map = mmap_getaddr(mmap);
+
+	int num_threads = ceil(s/1024.);
+	omp_set_num_threads(num_threads);
+
+	#pragma omp parallel for
+	for(int n = 0; n < num_threads; n++) {
+		int from = n * 1024;
+		int len = (from + 1024) > s ? s - from : 1024;
+		len = ceil(len/4.);
+
+		printf("from byte %d len (32bit) %d\n", from, len);
+
+		if(omp_in_parallel()) {
+			printf("Thread %d\n", n);
+		}
+
+		int *chunk = &map[(int) ceil(from/4.)];
+		for(int i = 0; i < len; i++) {
+			chunk[i] ^= key;
+		}
 	}
-	int *map = MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, 0);
-	if(map == NULL) {
-		perr("Error MapViewOfFile");
-		exit(1);
-	}
 
-	printf("%"PRIu64"\n", (intmax_t) s);
-	int key = 25678;
+	memory_unmap(mmap);
 
-	fsize_t i;
-	for(i = 0; i < ceil(s/4.); i++) {
-	 	map[i] ^= key;
-	}
-	printf("%"PRIu64"\n", (intmax_t) i);
+	unlock_file(file, 0, s);
+	close_file(file);
 
-	FlushViewOfFile(map, 0);
-	UnmapViewOfFile(map);
-	CloseHandle(hFile);
-	CloseHandle(mapping);
+	return 0;
 
-	//int fd = open("/home/fabrizio/prova.txt", O_RDWR);
-	// int fd = open("/mnt/HDD/Fabrizio/Pictures/crackstation6GB.txt", O_RDWR);
-	// if(fd < 0) logs("error open");
-	// int key = 25678;
-	// int *map = (int *) mmap(NULL, ceil(s/4.) * 4, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	// if(!map) logs("error mmap");
-	// for(fsize_t i = 0; i < ceil(s/4.); i++) {
-	// 	map[i] ^= key;
-	// }
-	// munmap(map, s);
 
 }
