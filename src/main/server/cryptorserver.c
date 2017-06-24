@@ -5,13 +5,17 @@
 #include "files.h"
 #include "logging.h"
 #include "protocol.h"
+#include "encrypt.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include <string.h>
 #include <inttypes.h>
+#include <math.h>
 
 static void handle_list_commands(Socket client, int is_recursive);
+static void handle_encrytion_commands(Socket client);
 
 void cryptor_handle_connection(Socket client) {
     char cmd[5];
@@ -24,10 +28,8 @@ void cryptor_handle_connection(Socket client) {
         handle_list_commands(client, 0);
     } else if(strcmp(cmd, LSTR) == 0) {
         handle_list_commands(client, 1);
-    } else if(strcmp(cmd, ENCR) == 0) {
-        send(client, RETOK, 3, MSG_NOSIGNAL); //TODO: implement
-    } else if(strcmp(cmd, DECR) == 0) {
-        send(client, RETOK, 3, MSG_NOSIGNAL); //TODO: implement
+    } else if(strcmp(cmd, ENCR) == 0 || strcmp(cmd, DECR) == 0) {
+        handle_encrytion_commands(client);
     }
 
     socket_close(client);
@@ -93,6 +95,93 @@ static void handle_list_commands(Socket client, int is_recursive) {
 
     sbuf_destroy(path);
     sbuf_destroy(cmdline);
+}
+
+static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **path);
+static void generate_key(unsigned int seed, int *key, int key_len);
+
+static void handle_encrytion_commands(Socket client) {
+    char *path = NULL;
+    unsigned int seed;
+    if(parse_encryption_cmdline(client, &seed, &path)) {
+        send(client, RETERR, 3, MSG_NOSIGNAL);
+        if(path) free(path);
+        return;
+    }
+
+    int err;
+	File file = open_file(path, READ | WRITE, &err);
+	if(err) {
+        char *errn = (err == ERR_NOFILE) ? RETERR : RETERRTRANS;
+		send(client, errn, 3, MSG_NOSIGNAL);
+        free(path);
+        return;
+	}
+    free(path);
+
+	fsize_t s;
+	if(fget_file_size(file, &s)) {
+        send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
+        return;
+	}
+    s = ceil(s/4.) * 4; //closest multiple of 4 greater than size
+
+    if(lock_file(file, 0, s)) {
+        send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
+        return;
+    }
+
+    int key[8];
+    generate_key(seed, key, 8);
+    err = encrypt(file, key, 8);
+
+    err |= unlock_file(file, 0, s);
+
+    if(err) {
+        send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
+        return;
+    }
+
+    send(client, RETOK, 3, MSG_NOSIGNAL);
+}
+
+static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **path) {
+    StringBuffer *sb = sbuf_create();
+    char buff[512];
+    ssize_t bytes_recv;
+    while((bytes_recv = recv(client, buff, sizeof(buff), 0)) > 0) {
+        sbuf_append(sb, buff, bytes_recv);
+        if(sbuf_endswith(sb, "\r\n")) break; //\r\n signals end of encr/decr command lines
+    }
+    sbuf_truncate(sb, sbuf_get_len(sb) - 2);
+
+    char *saveptr;
+    char *seed_str = strtok_r(sbuf_get_backing_buf(sb), " ", &saveptr);
+
+    char *err;
+    unsigned long seedl = strtoul(seed_str, &err, 10);
+    if(seedl > UINT_MAX || *err) {
+        sbuf_destroy(sb);
+        return - 1;
+    }
+    *seed = (unsigned int) seedl;
+    dlogf("seed: %d\n", *seed);
+
+    char *tok;
+    *path = malloc(sbuf_get_len(sb) - sizeof(seed_str) + 1);
+    strcpy(*path, strtok_r(NULL, " ", &saveptr));
+    while((tok = strtok_r(NULL, " ", &saveptr)))
+        strcat(*path, tok);
+
+    dlogf("file: %s\n", *path);
+    sbuf_destroy(sb);
+    return 0;
+}
+
+static void generate_key(unsigned int seed, int *key, int key_len) {
+    for(int i = 0; i < key_len; i++) {
+        key[i] = rand_r(&seed);
+    }
 }
 
 Socket init_server_socket(u_short port) {

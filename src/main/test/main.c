@@ -6,6 +6,7 @@
 #include "files.h"
 #include "stringbuf.h"
 #include "mmap.h"
+#include "encrypt.h"
 
 #include <omp.h>
 #include <math.h>
@@ -44,35 +45,11 @@ int main() {
 
 	//Encrypt
 
-	int key[8] = {214748347, 5465489, 27933456, 940211, 1274325, 786888, 5468392, 7876626}; //key for testing
+	int key[8] = {25678, 45656, 34566, 9876532, 3254543, 7862331, 4312, 83,}; //key for testing
 
-	MemoryMap *mmap = memory_map(file, 0, s);
-	if(!mmap) perr("Error");
-
-	int *map = mmap_getaddr(mmap);
-
-	int num_threads = ceil(s/1024.);
-	omp_set_num_threads(num_threads);
-
-	#pragma omp parallel for
-	for(int n = 0; n < num_threads; n++) {
-		int from = n * 1024;
-		int len = (from + 1024) > s ? s - from : 1024;
-		len = ceil(len/4.);
-
-		printf("from byte %d len (32bit) %d\n", from, len);
-
-		if(omp_in_parallel()) {
-			printf("Thread %d\n", n);
-		}
-
-		int *chunk = &map[(int) ceil(from/4.)];
-		for(int i = 0; i < len; i++) {
-			chunk[i] ^= key[i % 8];
-		}
+	if(encrypt(file, key, 8)) {
+		elog("error while encrypting the file");
 	}
-
-	memory_unmap(mmap);
 
 	unlock_file(file, 0, s);
 	close_file(file);

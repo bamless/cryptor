@@ -10,6 +10,7 @@ typedef struct StringBuffer StringBuffer; //opaque type, to provide encapsulatio
 
 StringBuffer* sbuf_create();
 void sbuf_destroy(StringBuffer *sbuf);
+char* sbuf_detach_and_destroy(StringBuffer *sbuf);
 
 void sbuf_clear(StringBuffer *sbuf);
 char* sbuf_get_backing_buf(StringBuffer *sbuf);
@@ -21,5 +22,6 @@ int sbuf_endswith(StringBuffer *sbuf, const char *str);
 void sbuf_append(StringBuffer *sbuf, const char *str, size_t len);
 void sbuf_appendstr(StringBuffer *sbuf, const char *str);
 void sbuf_truncate(StringBuffer *sbuf, size_t len);
+void sbuf_cut(StringBuffer *sbuf, size_t len);
 
 #endif

@@ -3,6 +3,6 @@
 
 #include "files.h"
 
-int encrypt(File f, unsigned int seed);
+int encrypt(File f, int *key, int key_len);
 
 #endif

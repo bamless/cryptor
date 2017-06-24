@@ -26,6 +26,12 @@ void sbuf_destroy(StringBuffer *sbuf) {
     free(sbuf);
 }
 
+char* sbuf_detach_and_destroy(StringBuffer *sbuf) {
+    char *buf = sbuf->buff;
+    free(sbuf);
+    return buf;
+}
+
 void sbuf_clear(StringBuffer *sbuf) {
     sbuf->len = 0;
     sbuf->buff[0] = '\0';
@@ -76,6 +82,14 @@ void sbuf_truncate(StringBuffer *sbuf, size_t len) {
     if(len < 0 || len >= sbuf->len) return;
     sbuf->len = len;
     sbuf->buff[sbuf->len] = '\0';
+}
+
+void sbuf_cut(StringBuffer *sbuf, size_t len) {
+    if(len <= 0 || len > sbuf->len) return;
+    memmove(sbuf->buff, sbuf->buff + len, sbuf->len - len);
+    sbuf->len -= len;
+    sbuf->buff[sbuf->len] = '\0';
+    printf("%s\n", sbuf->buff);
 }
 
 static void sbuf_grow(StringBuffer *sbuf, size_t len) {

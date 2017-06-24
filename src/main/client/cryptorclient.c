@@ -29,6 +29,7 @@ int cryptor_send_command(Socket sock, const char *cmd, unsigned int seed, const 
         sbuf_appendstr(cmdline, seedstr);
         sbuf_appendstr(cmdline, " ");
         sbuf_appendstr(cmdline, path);
+        sbuf_appendstr(cmdline, "\r\n");
 
         if(send(sock, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), 0) < 0) {
             perr_sock("Error send_command");
