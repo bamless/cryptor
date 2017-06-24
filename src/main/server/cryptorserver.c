@@ -14,6 +14,10 @@
 #include <inttypes.h>
 #include <math.h>
 
+#ifdef _WIN32
+static int rand_r(unsigned int *seed);
+#endif
+
 static void handle_list_commands(Socket client, int is_recursive);
 static void handle_encrytion_commands(Socket client);
 
@@ -122,25 +126,34 @@ static void handle_encrytion_commands(Socket client) {
 	fsize_t s;
 	if(fget_file_size(file, &s)) {
         send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
+        close_file(file);
         return;
 	}
     s = ceil(s/4.) * 4; //closest multiple of 4 greater than size
 
     if(lock_file(file, 0, s)) {
         send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
+        close_file(file);
         return;
     }
 
     int key[8];
     generate_key(seed, key, 8);
-    err = encrypt(file, key, 8);
-
-    err |= unlock_file(file, 0, s);
-
-    if(err) {
+    //int key[8] = {25678, 45656, 34566, 9876532, 3254543, 7862331, 4312, 83,}; //key for testing
+    if(encrypt(file, key, 8)) {
         send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
+        unlock_file(file, 0, s);
+        close_file(file);
         return;
     }
+
+    if(unlock_file(file, 0, s)) {
+        send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
+        close_file(file);
+        return;
+    }
+
+    close_file(file);
 
     send(client, RETOK, 3, MSG_NOSIGNAL);
 }
@@ -183,6 +196,21 @@ static void generate_key(unsigned int seed, int *key, int key_len) {
         key[i] = rand_r(&seed);
     }
 }
+
+#ifdef _WIN32
+static int rand_r(unsigned int *seed) {
+        long k;
+        long s = (long)(*seed);
+        if (s == 0)
+            s = 0x12345987;
+        k = s / 127773;
+        s = 16807 * (s - k * 127773) - 2836 * k;
+        if (s < 0)
+            s += 2147483647;
+        (*seed) = (unsigned int)s;
+        return (int)(s & RAND_MAX);
+}
+#endif
 
 Socket init_server_socket(u_short port) {
 	struct sockaddr_in server;

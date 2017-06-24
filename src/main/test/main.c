@@ -2,6 +2,7 @@
 #include "threadpool.h"
 #include "logging.h"
 #include "utilsCompat.h"
+#include "thread.h"
 #include "error.h"
 #include "files.h"
 #include "stringbuf.h"
@@ -20,13 +21,12 @@
 // #include <sys/stat.h>
 // #include <fcntl.h>
 
-int main() {
-
+static void thread(void *args) {
 	int err;
-	File file = open_file("/home/fabrizio/tux.bmp", READ | WRITE, &err);
+	File file = open_file("D:/Fabrizio/Pictures/crackstation3GB.txt", READ | WRITE, &err);
 	if(err) {
 		perr("Error");
-		return 1;
+		exit(1);
 	}
 
 	fsize_t s;
@@ -53,8 +53,10 @@ int main() {
 
 	unlock_file(file, 0, s);
 	close_file(file);
+}
 
-	return 0;
-
-
+int main() {
+	Thread t;
+	thread_create(&t, &thread, NULL);
+	thread_join(&t);
 }
