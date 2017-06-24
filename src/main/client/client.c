@@ -12,8 +12,10 @@
 #include <limits.h>
 #include <inttypes.h>
 
+#define SEEDS_FILE "cryptor_seeds"
+
 typedef struct ParsedArgs {
-	char cmd;				 /*The command passed from arguments*/
+	const char *cmd;		 /*The command passed from arguments*/
 	unsigned long host_addr; /*The server address*/
 	u_short host_port;		 /*The server port*/
 	unsigned int seed;		 /*The seed for the ENCR and DECR command*/
@@ -23,35 +25,23 @@ typedef struct ParsedArgs {
 static void usage(char *exec_name);
 static void parse_args(int argc, char **argv, ParsedArgs *args);
 static void strtoipandport(char *hostandport, unsigned long *ip, u_short *port);
+static void save_seed(unsigned int seed, const char *path);
+static char* str_retcode(int retcode);
 
 int main(int argc, char **argv) {
 	ParsedArgs args;
 	parse_args(argc, argv, &args);
 
 	socket_startup();
-
 	Socket sock = init_connection(args.host_addr, args.host_port);
 
-	int resp_code = 0;
-	switch(args.cmd) {
-		case 'l':
-			resp_code = cryptor_send_command(sock, LSTF, 0, NULL);
-			break;
-		case 'R' :
-			resp_code = cryptor_send_command(sock, LSTR, 0, NULL);
-			break;
-		case 'e':
-			resp_code = cryptor_send_command(sock, ENCR, args.seed, args.path);
-			break;
-		case 'd':
-			resp_code = cryptor_send_command(sock, DECR, args.seed, args.path);
-			break;
-	}
+	int ret_code = cryptor_send_command(sock, args.cmd, args.seed, args.path);
+	if(strcmp(args.cmd, ENCR) == 0 && ret_code == RETOK)
+		save_seed(args.seed, args.path);
 
-	dlogf("Server responded with code %d\n", resp_code);
-
+	printf("Server responded with code %d: %s.\n\n", ret_code, str_retcode(ret_code));
 	//If the response of the server is 300 (i.e. the server will send more output) read the remaining output
-	if(resp_code == RETMORE_INT) {
+	if(ret_code == RETMORE_INT) {
 		cryptor_print_more(sock);
 	}
 
@@ -61,23 +51,26 @@ int main(int argc, char **argv) {
 
 static void parse_args(int argc, char **argv, ParsedArgs *args) {
 	if(argc < 3) usage(argv[0]);
+
 	//get the ip addr and the port
 	strtoipandport(argv[argc - 1], &args->host_addr, &args->host_port);
 	if(args->host_addr < 0) usage(argv[0]);
 	if(args->host_port == 0) args->host_port = htons(DEFAULT_PORT);
 
+	//get the options
 	int c;
-	args->cmd = '\0';
+	args->cmd = NULL;
+	args->seed = 0;
 	switch ((c = getopt(argc, argv, "lRed"))) {
 		case 'l':
 		case 'R':
 			if(argc != 3) usage(argv[0]);
-			args->cmd = c; //the command
+			args->cmd = c == 'l' ? LSTF : LSTR; //the command
 			break;
 		case 'e':
 		case 'd': {
 			if(argc != 5) usage(argv[0]);
-			args->cmd = c; //the command
+			args->cmd = c == 'e' ? ENCR: DECR; //the command
 			//convert the 'seed' argument
 			char *err;
 			unsigned long seed = strtol(argv[optind], &err, 10);
@@ -95,7 +88,24 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 			usage(argv[0]);
 			break;
 	}
-	if(args->cmd == '\0') usage(argv[0]);
+	if(args->cmd == NULL) usage(argv[0]);
+}
+
+static char* str_retcode(int retcode) {
+	switch(retcode) {
+		case RETOK_INT:
+			return "Success";
+		case RETERR_INT:
+			return "Error: The file doesn't exist or the received command was"
+				   " malformed";
+		case RETERRTRANS_INT:
+			return "Error: The server hasn't been able to encrypt/decrypt the"
+				   " file, maybe the file is in use by another process or some"
+				   " I/O error occured. Please try again later";
+		case RETMORE_INT:
+			return "Success, more output incoming";
+	}
+	return "Unknown return code";
 }
 
 /*
@@ -117,9 +127,21 @@ static void strtoipandport(char *hostandport, unsigned long *ip, u_short *port) 
 
 	char *err;
 	long p = strtol(portstr, &err, 10);
-	if(*err != '\0' || p < PORT_MIN || p > PORT_MAX)
+	if(*err != '\0' || p < PORT_MIN || p > PORT_MAX) {
 		p = 0;
+	}
 	*port = (u_short) htons((uint16_t) p);
+}
+
+static void save_seed(unsigned int seed, const char *path) {
+	char seedstr[11];
+	sprintf(seedstr, "%u", seed);
+	FILE *seeds = fopen(SEEDS_FILE, "a");
+	fputs(seedstr, seeds);
+	fputc(' ', seeds);
+	fputs(path, seeds);
+	fputc('\n',  seeds);
+	fclose(seeds);
 }
 
 static void usage(char *exec_name) {

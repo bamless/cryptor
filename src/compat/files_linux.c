@@ -19,6 +19,12 @@ struct Dir {
 	struct dirent *dir_entry;
 };
 
+static void out_of_mem(DIR *unix_dir, int *err) {
+	errno = ENOMEM;
+	set_err(err);
+	closedir(unix_dir);
+}
+
 Dir* open_dir(const char *path, int *err) {
 	*err = 0;
 	DIR *unix_dir = opendir(path);
@@ -29,9 +35,7 @@ Dir* open_dir(const char *path, int *err) {
 
 	Dir *dir = malloc(sizeof(Dir));
 	if(!dir) {
-		errno = ENOMEM;
-		set_err(err);
-		closedir(unix_dir);
+		out_of_mem(unix_dir, err);
 		return NULL;
 	}
 
@@ -39,15 +43,12 @@ Dir* open_dir(const char *path, int *err) {
 	dir->dir = unix_dir;
 	dir->prev_entry = malloc(len_entry);
 	if(!dir->prev_entry) {
-		errno = ENOMEM;
-		set_err(err);
-		closedir(unix_dir);
+		out_of_mem(unix_dir, err);
 		return NULL;
 	}
 	dir->dir_entry = NULL;
 	return dir;
 }
-
 
 int close_dir(Dir *dir) {
 	int ret = closedir(dir->dir);
@@ -183,6 +184,15 @@ char* get_cwd() {
 		pwd = realloc(pwd, size);
 	}
 	return pwd;
+}
+
+int rename_file(const char *oldpath, const char *newpath) {
+	if(rename(oldpath, newpath)) {
+		int err = 0;
+		set_err(&err);
+		return err;
+	}
+	return 0;
 }
 
 static void set_err(int *err) {

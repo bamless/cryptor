@@ -168,6 +168,15 @@ char* get_cwd() {
 	return cwd;
 }
 
+int rename_file(const char *oldpath, const char *newpath) {
+	if(!MoveFile(oldpath, newpath)) {
+		int err = 0;
+		set_err(&err);
+		return err;
+	}
+	return 0;
+}
+
 static void set_err(int *err) {
 	switch(GetLastError()) {
 		case ERROR_FILE_NOT_FOUND:

@@ -5,9 +5,9 @@
 
 typedef struct MemoryMap MemoryMap;
 
-MemoryMap *memory_map(File f, fsize_t off, fsize_t length);
+MemoryMap *memory_map(File f, fsize_t length);
 int memory_unmap(MemoryMap *mmap);
-void *mmap_getaddr(MemoryMap *mmap);
-
+void *mmap_mapview(MemoryMap *mmap, fsize_t off, fsize_t len);
+int mmap_unmapview(void *view);
 
 #endif

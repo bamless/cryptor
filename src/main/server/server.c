@@ -3,7 +3,6 @@
 #include "error.h"
 #include "threadpool.h"
 #include "files.h"
-
 //cyptor protocol headers
 #include "protocol.h"
 #include "cryptorserver.h" /*cryptor_handle_connection(Socket socket)*/
@@ -16,6 +15,7 @@
 #include <string.h>
 
 #define DEFAULT_THREADS 20
+#define DEFAULT_CFG_FILE "cryptor.conf"
 
 typedef struct Config {
 	u_short port;		/*The server port*/
@@ -25,13 +25,13 @@ typedef struct Config {
 
 static void usage(const char *exec_name);
 static void init_config(Config *cfg);
-static void parse_args(int argc, char **argv, Config *cfg);
+static void parse_args_and_cfg(int argc, char **argv, Config *cfg);
 static void threadpool_handle_connection(void *incoming_conn, int id);
 
 int main(int argc, char **argv) {
 	Config cfg;
 	init_config(&cfg);
-	parse_args(argc, argv, &cfg);
+	parse_args_and_cfg(argc, argv, &cfg);
 
 	if(change_dir(cfg.pwd)) {
 		perr("Error");
@@ -68,7 +68,7 @@ static void threadpool_handle_connection(void *incoming_conn, int id) {
 	dlogf("Thread %d done\n", id);
 }
 
-static void parse_args(int argc, char **argv, Config *cfg) {
+static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 	int c, cflag = 0;
 	while((c = getopt(argc, argv, ":c:n:p:")) != -1) {
 		switch(c) {

@@ -1,6 +1,7 @@
 #include "encrypt.h"
 #include "files.h"
 #include "mmap.h"
+#include "error.h"
 #include "logging.h"
 
 #include <inttypes.h>
@@ -12,7 +13,7 @@
 #define PAR_BLCK (256 * 1024)
 
 int encrypt(File file, int *key, int key_len) {
-    if( ((key_len * 4) & (key_len * 4 - 1)) != 0 || (key_len * 4) > PAR_BLCK)
+    if(((key_len * 4) & (key_len * 4 - 1)) != 0 || (key_len * 4) > PAR_BLCK)
         return -1;
 
     fsize_t size;
@@ -21,19 +22,28 @@ int encrypt(File file, int *key, int key_len) {
     }
     size = ceil(size/4.) * 4;
 
-    MemoryMap *mmap = memory_map(file, 0, size);
+    MemoryMap *mmap = memory_map(file, size);
     if(!mmap) return -1;
 
-    int *map = mmap_getaddr(mmap);
+    fsize_t num_chunks = ceil(size/((float) PAR_BLCK));
 
-    fsize_t iter = ceil(size/4.);
-    #pragma omp parallel for schedule(static, (int) ceil(PAR_BLCK/4.))
-    for(fsize_t i = 0; i < iter; i++) {
-        map[i] ^= key[i % key_len];
+    //int numthreads = num_chunks > 4 ? 4 : num_chunks;
+    #pragma omp parallel for //num_threads(numthreads)
+    for(fsize_t n = 0; n < num_chunks; n++) {
+        fsize_t from = n * PAR_BLCK;
+        fsize_t len = (from + PAR_BLCK) > size ? size - from : PAR_BLCK;
+
+        int *chunk = mmap_mapview(mmap, from, len);
+        if(chunk == NULL) perr("error");
+
+        fsize_t len32 = ceil(len/4.);
+        for(int i = 0; i < len32; i++) {
+            chunk[i] ^= key[i % key_len];
+        }
+
+        mmap_unmapview(chunk);
     }
 
-    if(memory_unmap(mmap)) {
-        return -1;
-    }
+    memory_unmap(mmap);
     return 0;
 }
