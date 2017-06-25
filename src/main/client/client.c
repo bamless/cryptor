@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
 	Socket sock = init_connection(args.host_addr, args.host_port);
 
 	int ret_code = cryptor_send_command(sock, args.cmd, args.seed, args.path);
-	if(strcmp(args.cmd, ENCR) == 0 && ret_code == RETOK)
+	if(strcmp(args.cmd, ENCR) == 0 && ret_code == RETOK_INT)
 		save_seed(args.seed, args.path);
 
 	printf("Server responded with code %d: %s.\n\n", ret_code, str_retcode(ret_code));

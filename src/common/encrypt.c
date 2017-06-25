@@ -2,7 +2,6 @@
 #include "files.h"
 #include "mmap.h"
 #include "error.h"
-#include "logging.h"
 
 #include <inttypes.h>
 #include <limits.h>
@@ -34,7 +33,7 @@ int encrypt(File file, int *key, int key_len) {
         fsize_t len = (from + PAR_BLCK) > size ? size - from : PAR_BLCK;
 
         int *chunk = mmap_mapview(mmap, from, len);
-        if(chunk == NULL) return -1;
+        if(chunk == NULL) perr("Error encrypt");
 
         fsize_t len32 = ceil(len/4.);
         for(int i = 0; i < len32; i++) {
