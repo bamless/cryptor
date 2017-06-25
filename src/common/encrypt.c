@@ -34,7 +34,7 @@ int encrypt(File file, int *key, int key_len) {
         fsize_t len = (from + PAR_BLCK) > size ? size - from : PAR_BLCK;
 
         int *chunk = mmap_mapview(mmap, from, len);
-        if(chunk == NULL) perr("error");
+        if(chunk == NULL) return -1;
 
         fsize_t len32 = ceil(len/4.);
         for(int i = 0; i < len32; i++) {
