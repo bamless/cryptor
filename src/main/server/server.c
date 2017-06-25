@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 
 #ifdef __unix
 	struct sigaction sa;
-	sa.sa_flags = 0; //we want SIGHUP to interrupt the recv syscall, so no SA_RESTART flag
+	sa.sa_flags = 0; //we want SIGHUP to interrupt the accept syscall, so no SA_RESTART flag
 	sigemptyset(&sa.sa_mask);
 	sa.sa_handler = &signal_handler;
 	if(sigaction(SIGHUP, &sa, NULL) == -1) {
