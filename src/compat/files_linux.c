@@ -195,6 +195,16 @@ int rename_file(const char *oldpath, const char *newpath) {
 	return 0;
 }
 
+char* get_abs(const char *path) {
+	char resolved[PATH_MAX];
+	if(realpath(path, resolved) == NULL) {
+		return NULL;
+	}
+	char *resolved_dyn = malloc(strlen(resolved) + 1);
+	strcpy(resolved_dyn, resolved);
+	return resolved_dyn;
+}
+
 static void set_err(int *err) {
 	switch (errno) {
 		case ENOENT:

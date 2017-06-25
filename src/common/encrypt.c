@@ -3,6 +3,7 @@
 #include "mmap.h"
 #include "error.h"
 
+#include <stdlib.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <math.h>

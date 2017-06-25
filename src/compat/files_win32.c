@@ -177,6 +177,17 @@ int rename_file(const char *oldpath, const char *newpath) {
 	return 0;
 }
 
+char* get_abs(const char *path) {
+	int req = GetFullPathName(path, 0, NULL, NULL);
+	if(req == 0) return NULL;
+
+	char *resolved = malloc(req);
+	if(GetFullPathName(path, req, resolved, NULL) == 0) {
+		return NULL;
+	}
+	return resolved;
+}
+
 static void set_err(int *err) {
 	switch(GetLastError()) {
 		case ERROR_FILE_NOT_FOUND:

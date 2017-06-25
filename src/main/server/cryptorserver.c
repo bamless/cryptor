@@ -189,6 +189,7 @@ static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **pa
     *path = malloc(cmdline_len - (strlen(seed_str) + 1) + 1);
     strcpy(*path, strtok_r(NULL, " ", &saveptr));
     while((tok = strtok_r(NULL, " ", &saveptr))) {
+        strcat(*path, " ");
         strcat(*path, tok);
     }
 

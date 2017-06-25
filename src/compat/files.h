@@ -79,6 +79,9 @@ int change_dir(const char *path);
 /*Returns the pwd absolute path. The buffer is malloc'd so the caller
  *should call free on the buffer once he's done using it.*/
 char* get_cwd();
+/*Returns the file's absolute path. The buffer is malloc'd so the caller
+ *should call free on the buffer once he's done using it.*/
+char* get_abs(const char *path);
 /*Renames the file old_name to new_name*/
 int rename_file(const char *old_name, const char *new_name);
 
