@@ -18,10 +18,10 @@
 #define DEFAULT_CFG_FILE "cryptor.conf" //if no configuration file is provided, search for this default in the process initial PWD
 
 typedef struct Config {
-	char *conf_file;	   /*The configuration file path*/
-	u_short port;		   /*The server port*/
-	char *pwd;		       /*The process working directory*/
-	int thread_count;	   /*The number of threads of the threadpool*/
+	char *conf_file;	/*The configuration file path*/
+	u_short port;		/*The server port*/
+	char *pwd;			/*The process working directory*/
+	int thread_count;	/*The number of threads of the threadpool*/
 } Config;
 
 #ifdef __unix

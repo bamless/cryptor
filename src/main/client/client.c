@@ -15,11 +15,11 @@
 #define SEEDS_FILE "cryptor_seeds"
 
 typedef struct ParsedArgs {
-	const char *cmd;		 /*The command passed from arguments*/
-	unsigned long host_addr; /*The server address*/
-	u_short host_port;		 /*The server port*/
-	unsigned int seed;		 /*The seed for the ENCR and DECR command*/
-	const char *path;		 /*The path for the ENCR and DECR command*/
+	const char *cmd;			/*The command passed from arguments*/
+	unsigned long host_addr;	/*The server address*/
+	u_short host_port;			/*The server port*/
+	unsigned int seed;			/*The seed for the ENCR and DECR command*/
+	const char *path;			/*The path for the ENCR and DECR command*/
 } ParsedArgs;
 
 static void usage(char *exec_name);
