@@ -120,21 +120,21 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
     }
 
     int err;
-	File file = open_file(path, READ | WRITE, &err);
-	if(err) {
+    File file = open_file(path, READ | WRITE, &err);
+    if(err) {
         char *errn = (err == ERR_NOFILE) ? RETERR : RETERRTRANS;
         send(client, errn, 3, MSG_NOSIGNAL);
         free(path);
         return;
-	}
+    }
 
-	fsize_t s;
-	if(fget_file_size(file, &s)) {
+    fsize_t s;
+    if(fget_file_size(file, &s)) {
         send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
         close_file(file);
         free(path);
         return;
-	}
+    }
     s = ceil(s/4.) * 4; //closest multiple of 4 greater than size
 
     if(lock_file(file, 0, s)) {
