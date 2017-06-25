@@ -20,7 +20,7 @@
 typedef struct Config {
 	char *conf_file;	   /*The configuration file path*/
 	u_short port;		   /*The server port*/
-	char *pwd;			   /*The process working directory*/
+	char *pwd;		       /*The process working directory*/
 	int thread_count;	   /*The number of threads of the threadpool*/
 } Config;
 
@@ -108,7 +108,7 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 	while((c = getopt(argc, argv, ":c:n:p:f:")) != -1) {
 		switch(c) {
 			case 'c':
-				cfg->pwd = strdup(optarg);
+				cfg->pwd = strdup(optarg); //we may need to modify the string later, so strdup it
 				break;
 			case 'p':
 				cfg->port = parse_port(optarg);
