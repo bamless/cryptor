@@ -70,7 +70,7 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 		case 'e':
 		case 'd': {
 			if(argc != 5) usage(argv[0]);
-			args->cmd = c == 'e' ? ENCR: DECR; //the command
+			args->cmd = c == 'e' ? ENCR : DECR; //the command
 			//convert the 'seed' argument
 			char *err;
 			unsigned long seed = strtol(argv[optind], &err, 10);
