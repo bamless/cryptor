@@ -119,6 +119,7 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 				if(cfg->thread_count == 0) usage(argv[0]);
 				break;
 			case 'f':
+				free(cfg->conf_file);
 				cfg->conf_file = get_abs(optarg); //retrieve the absolute path of the config file
 				break;
 			case '?':
