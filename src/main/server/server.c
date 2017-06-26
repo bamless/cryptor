@@ -42,6 +42,8 @@ static void threadpool_handle_connection(void *incoming_conn, int id);
 
 int main(int argc, char **argv) {
 
+	//TODO: daemonize here...
+
 #ifdef __unix
 	struct sigaction sa;
 	sa.sa_flags = 0; //we want SIGHUP to interrupt the accept syscall, so no SA_RESTART flag
@@ -140,6 +142,8 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 	if(cfg->pwd == NULL) usage(argv[0]); //the -c option is mandatory.
 }
 
+#define err_exit(msg) do { elog(msg); exit(1); } while(0)
+
 static void read_cfg_file(Config *cfg) {
 	FILE *file = fopen(cfg->conf_file, "r");
 	if(file == NULL) {
@@ -151,25 +155,30 @@ static void read_cfg_file(Config *cfg) {
 	char line[1024];
 	while(fgets(line, 1024, file)) {
 		char *opt = strtok(line, " ");
-		char *optarg = strtok(NULL, " ");
-		if(optarg == NULL) {
-			elogf("No argument to option `%s`.", opt);
-			return;
-		}
+		char *optarg;
 
 		if(strcmp(opt, "threads") == 0) {
+			optarg = strtok(NULL, " ");
+			if(optarg == NULL) err_exit("Args missing to option `threads`");
+
 			cfg->thread_count = parse_numthreads(optarg);
 			if(cfg->thread_count == 0) {
 				elog("Option `threads` of conf file is malformed.");
 				return;
 			}
 		} else if(strcmp(opt, "port") == 0) {
+			optarg = strtok(NULL, " ");
+			if(optarg == NULL) err_exit("Args missing to option `port`");
+
 			cfg->port = parse_port(optarg);
 			if(cfg->port == 0) {
 				elog("Option `port` of conf file is malformed.");
 				return;
 			}
 		} else if(strcmp(opt, "directory") == 0) {
+			optarg = strtok(NULL, " ");
+			if(optarg == NULL) err_exit("Args missing to option `directory`");
+
 			if(cfg->pwd) free(cfg->pwd);
 			cfg->pwd = malloc(1024);
 			strncpy(cfg->pwd, optarg, 1024);
@@ -182,6 +191,8 @@ static void read_cfg_file(Config *cfg) {
 		}
 	}
 }
+
+#undef err_exit
 
 static u_short parse_port(const char *portstr) {
 	char *err;
@@ -237,6 +248,6 @@ static void reload_cfg(Config *oldcfg, Socket *server_sock) {
 #endif
 
 static void usage(const char *exec_name) {
-	elogf("Usage: %s [-p port] [-n threads] -c pwd\n", exec_name);
+	elogf("Usage: %s [-p port] [-n threads] [-f conffile] -c pwd\n", exec_name);
 	exit(1);
 }

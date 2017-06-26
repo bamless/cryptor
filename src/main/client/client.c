@@ -137,10 +137,7 @@ static void save_seed(unsigned int seed, const char *path) {
 	char seedstr[11];
 	sprintf(seedstr, "%u", seed);
 	FILE *seeds = fopen(SEEDS_FILE, "a");
-	fputs(seedstr, seeds);
-	fputc(' ', seeds);
-	fputs(path, seeds);
-	fputc('\n',  seeds);
+	fprintf(seeds, "%s %s\n", seedstr, path);
 	fclose(seeds);
 }
 
