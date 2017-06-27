@@ -15,7 +15,8 @@
 #include <string.h>
 
 #define DEFAULT_THREADS 20
-#define DEFAULT_CFG_FILE "cryptor.conf" //if no configuration file is provided, search for this default in the process initial PWD
+//Default conf file to be searched for if no conf file is provided
+#define DEFAULT_CFG_FILE "cryptor.conf"
 
 typedef struct Config {
 	char *conf_file;	/*The configuration file path*/
@@ -24,6 +25,7 @@ typedef struct Config {
 	int thread_count;	/*The number of threads of the threadpool*/
 } Config;
 
+/*Linux specific functions for reloading the confs on SIGHUP and for daemonizing*/
 #ifdef __unix
 #include <signal.h>
 static int reload_requested = 0; //flags that indicates that the user wants to reload the config file
@@ -32,6 +34,7 @@ static void signal_handler(int signal) {
 	reload_requested = 1; //sighup is going to set the flag
 }
 static void reload_cfg(Config *oldcfg, Socket *server_sock);
+static void daemonize();
 #endif
 
 static void usage(const char *exec_name);
@@ -41,9 +44,6 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg);
 static void threadpool_handle_connection(void *incoming_conn, int id);
 
 int main(int argc, char **argv) {
-
-	//TODO: daemonize here...
-
 #ifdef __unix
 	struct sigaction sa;
 	sa.sa_flags = 0; //we want SIGHUP to interrupt the accept syscall, so no SA_RESTART flag
@@ -54,7 +54,6 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 #endif
-
 	Config cfg;
 	init_config(&cfg);
 	parse_args_and_cfg(argc, argv, &cfg);
@@ -65,10 +64,14 @@ int main(int argc, char **argv) {
 	}
 
 	socket_startup();
-
-	ThreadPool *tp = threadpool_create(cfg.thread_count);
 	Socket server_sock, client_sock;
 	server_sock = init_server_socket(htons(cfg.port));
+
+#ifdef __unix
+	daemonize();
+#endif
+
+	ThreadPool *tp = threadpool_create(cfg.thread_count);
 
 	struct sockaddr_in client;
 	socklen_t client_len = sizeof(client);
@@ -88,8 +91,8 @@ int main(int argc, char **argv) {
 
 	threadpool_destroy(tp, SOFT_SHUTDOWN);
 	socket_close(server_sock);
-
 	socket_cleanup();
+
 	free_config(&cfg);
 }
 
@@ -142,8 +145,6 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 	if(cfg->pwd == NULL) usage(argv[0]); //the -c option is mandatory.
 }
 
-#define err_exit(msg) do { elog(msg); exit(1); } while(0)
-
 static void read_cfg_file(Config *cfg) {
 	FILE *file = fopen(cfg->conf_file, "r");
 	if(file == NULL) {
@@ -155,30 +156,25 @@ static void read_cfg_file(Config *cfg) {
 	char line[1024];
 	while(fgets(line, 1024, file)) {
 		char *opt = strtok(line, " ");
-		char *optarg;
+		char *optarg = strtok(NULL, " ");
+		if(optarg == NULL) {
+			elogf("Argument missing for option `%s`\n", opt);
+			exit(1);
+		}
 
 		if(strcmp(opt, "threads") == 0) {
-			optarg = strtok(NULL, " ");
-			if(optarg == NULL) err_exit("Args missing to option `threads`");
-
 			cfg->thread_count = parse_numthreads(optarg);
 			if(cfg->thread_count == 0) {
 				elog("Option `threads` of conf file is malformed.");
 				return;
 			}
 		} else if(strcmp(opt, "port") == 0) {
-			optarg = strtok(NULL, " ");
-			if(optarg == NULL) err_exit("Args missing to option `port`");
-
 			cfg->port = parse_port(optarg);
 			if(cfg->port == 0) {
 				elog("Option `port` of conf file is malformed.");
 				return;
 			}
 		} else if(strcmp(opt, "directory") == 0) {
-			optarg = strtok(NULL, " ");
-			if(optarg == NULL) err_exit("Args missing to option `directory`");
-
 			if(cfg->pwd) free(cfg->pwd);
 			cfg->pwd = malloc(1024);
 			strncpy(cfg->pwd, optarg, 1024);
@@ -191,8 +187,6 @@ static void read_cfg_file(Config *cfg) {
 		}
 	}
 }
-
-#undef err_exit
 
 static u_short parse_port(const char *portstr) {
 	char *err;
@@ -222,6 +216,13 @@ static void free_config(Config *cfg) {
 	if(cfg->pwd) free(cfg->pwd);
 }
 
+static void usage(const char *exec_name) {
+	elogf("Usage: %s [-p port] [-n threads] [-f conffile] -c pwd\n", exec_name);
+	exit(1);
+}
+
+/* Linux specific stuff */
+
 #ifdef __unix
 static void reload_cfg(Config *oldcfg, Socket *server_sock) {
 	Config newcfg;
@@ -245,9 +246,41 @@ static void reload_cfg(Config *oldcfg, Socket *server_sock) {
 	*oldcfg = newcfg;
 	reload_requested = 0;
 }
-#endif
 
-static void usage(const char *exec_name) {
-	elogf("Usage: %s [-p port] [-n threads] [-f conffile] -c pwd\n", exec_name);
-	exit(1);
+static void daemonize() {
+	//fork the first time
+	pid_t pid = fork();
+	if(pid < 0) {
+		perr("Error first fork");
+		exit(1);
+	}
+	//exit the parent, now we are detached from the terminal
+	if(pid > 0) exit(0);
+
+	//become a process group leader and a session leader, we are guaranteed from
+	//the previous fork that we are not PG leaders, so this shouldn't fail
+	pid_t sid = setsid();
+	if(sid < 0) {
+		perr("Error setsid");
+		exit(1);
+	}
+
+	//fork a second time, so we are not session leaders anymore
+	pid = fork();
+	if(pid < 0) {
+		perr("Error second fork");
+		exit(1);
+	}
+	if(pid > 0) exit(0); //let the session leader exit, now we can't ever re-aquire a controlling terminal
+
+	umask(0); //reset the umask in case we inherited some weird mask
+
+	//close stdin, stdout and stderr and reopen them on /dev/null
+	//we can open some log file as stdout/err, but for now close them.
+	int nullfd = open("/dev/null", O_RDWR);
+	dup2(nullfd, 0);
+	dup2(nullfd, 1);
+	dup2(nullfd, 2);
+	close(nullfd);
 }
+#endif
