@@ -159,7 +159,7 @@ static void read_cfg_file(Config *cfg) {
 		char *optarg = strtok(NULL, " ");
 		if(optarg == NULL) {
 			elogf("Argument missing for option `%s`\n", opt);
-			exit(1);
+			return;
 		}
 
 		if(strcmp(opt, "threads") == 0) {
@@ -212,7 +212,7 @@ static void init_config(Config *cfg) {
 }
 
 static void free_config(Config *cfg) {
-	free(cfg->conf_file);
+	if(cfg->conf_file) free(cfg->conf_file);
 	if(cfg->pwd) free(cfg->pwd);
 }
 
@@ -226,12 +226,14 @@ static void usage(const char *exec_name) {
 #ifdef __unix
 static void reload_cfg(Config *oldcfg, Socket *server_sock) {
 	Config newcfg;
-	init_config(&newcfg);
-
 	newcfg.conf_file = strdup(oldcfg->conf_file);
+	newcfg.port = DEFAULT_PORT;
+	newcfg.thread_count = DEFAULT_THREADS;
+	newcfg.pwd = NULL;
+	
 	read_cfg_file(&newcfg);
 
-	if(strcmp(newcfg.pwd, oldcfg->pwd) != 0) {
+	if(newcfg.pwd != NULL && strcmp(newcfg.pwd, oldcfg->pwd) != 0) {
 		printf("%s\n", newcfg.pwd);
 		if(change_dir(newcfg.pwd)) {
 			perr("Error chdir");
@@ -242,6 +244,7 @@ static void reload_cfg(Config *oldcfg, Socket *server_sock) {
 		socket_close(*server_sock);
 		*server_sock = init_server_socket(htons(newcfg.port));
 	}
+	
 	free_config(oldcfg);
 	*oldcfg = newcfg;
 	reload_requested = 0;
