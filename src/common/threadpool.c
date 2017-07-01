@@ -35,11 +35,8 @@ static void worker_thread(void *);
 ThreadPool* threadpool_create(int thread_count) {
     ThreadPool *tp = malloc(sizeof(ThreadPool));
     if(!tp) return NULL;
+    memset(tp, 0, sizeof(ThreadPool));
     tp->thread_count = thread_count;
-    tp->queue_size = 0;
-    tp->tasks_head = NULL;
-    tp->tasks_tail = NULL;
-    tp->shutting = 0;
     tp->threads = malloc(sizeof(Thread) * thread_count);
     if(!tp->threads) {
         free(tp);

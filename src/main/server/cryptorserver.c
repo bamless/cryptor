@@ -36,6 +36,8 @@ void cryptor_handle_connection(Socket client) {
         handle_encrytion_commands(client, 0);
     } else if(strcmp(cmd, DECR) == 0) {
         handle_encrytion_commands(client, 1);
+    } else {
+        send(client, RETERR, 3, MSG_NOSIGNAL);
     }
 
     socket_close(client);

@@ -94,7 +94,8 @@ void sbuf_cut(StringBuffer *sbuf, size_t len) {
 
 static void sbuf_grow(StringBuffer *sbuf, size_t len) {
     size_t new_size = sbuf->size;
-    //multiply by 2 the size until it can hold sizeof(len) new data. Multiplying, instead of growing at a constant rate, ensures constant amortized time complexity
+    //multiply by 2 the size until it can hold sizeof(len) new data. Multiplying,
+    //instead of growing at a constant rate, ensures constant amortized time complexity
     while(new_size < sbuf->len + len)
         new_size <<= 1;
     char *new_buff = realloc(sbuf->buff, new_size);

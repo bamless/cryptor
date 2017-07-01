@@ -1,16 +1,3 @@
-# *********************************************************************
-#  Generic Makefile With Header Dependencies
-# *********************************************************************
-#  Author:         	(c) Fabrizio Pietrucci
-#  License:       	See the end of this file for license information
-#  Created:        	December 17, 2016
-
-#  Last changed:   	@Date: 2017/5/26 14:00
-#  Changed by:     	@Author: fabrizio pietrucci
-#  Version:  		@Verision 1.0
-
-####### SETTINGS #######
-
 # The compiler
 CC = gcc
 
@@ -23,8 +10,8 @@ else
 endif
 
 # Executable name
-SRV_EXEC_NAME = server
-CLNT_EXEC_NAME = client
+SRV_EXEC_NAME = cryptord
+CLNT_EXEC_NAME = cryptor
 
 # Top level SRC folder
 SRC = src
@@ -32,7 +19,7 @@ SRC = src
 SRC_MAIN = $(SRC)/main
 # Directory containing the win32/linux cross platform modules
 SRC_COMPAT = $(SRC)/compat
-# Directory containing the code common to all project
+# Directory containing the code common to all the project
 SRC_COMMON = $(SRC)/common
 
 # Folder in which the object files will be placed
@@ -116,7 +103,6 @@ all:
 # Creates the needed directories
 .PHONY: createdirs
 createdirs:
-	@echo "Generic Make File With Header Dependencies, Copyright (C) 2016 Fabrizio Pietrucci"
 	@echo "Creating directories"
 	@mkdir -p $(dir $(OBJECTS))
 	@mkdir -p $(dir $(OBJECTS_COMPAT))
@@ -151,7 +137,6 @@ test: createdirs
 
 .PHONY: _server
 _server: $(BIN)/$(SRV_EXEC_NAME)
-
 # Links the object files into an executable
 $(BIN)/$(SRV_EXEC_NAME): $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_SERVER) $(STATICLIBS)
 	@echo "Linking $@..."
@@ -159,7 +144,6 @@ $(BIN)/$(SRV_EXEC_NAME): $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_SERVER) $(STA
 
 .PHONY: _client
 _client: $(BIN)/$(CLNT_EXEC_NAME)
-
 # Links the object files into an executable
 $(BIN)/$(CLNT_EXEC_NAME): $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_CLIENT) $(STATICLIBS)
 	@echo "Linking $@..."
@@ -168,7 +152,6 @@ $(BIN)/$(CLNT_EXEC_NAME): $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(OBJ_CLIENT) $(ST
 # TODO: For testing only, to be removed
 .PHONY: _test
 _test: $(BIN)/test
-
 $(BIN)/test: $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(BUILD)/main/test/main.o $(STATICLIBS)
 	@echo "Linking $@..."
 	@$(CC) $(CFLAGS) $(OBJECTS_COMPAT) $(OBJECTS_COMMON) $(BUILD)/main/test/main.o $(LDFLAGS) -o $@ $(LIBS_PATH) $(LIBS)
@@ -218,18 +201,3 @@ cleanClient:
 cleanTest:
 	@echo "Deleting directories..."
 	@rm -rf $(BUILD)/main/test $(BIN)/test
-
-# Copyright (C) 2016 Fabrizio Pietrucci
-
-# This program is free software: you can redistribute it and/or
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
