@@ -8,7 +8,6 @@
  * @arg port the port on which the socket will be listening
  */
 Socket init_server_socket(u_short port);
-
 /*
  * Handles the conction with a client, it receives commands and respond to them
  * according to the protocol.

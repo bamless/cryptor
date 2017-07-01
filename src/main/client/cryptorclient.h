@@ -14,7 +14,6 @@
  * @arg poer the port over you want to connect. This should be already in network bytes order
  */
 Socket init_connection(unsigned long addr, u_short port);
-
 /*
  * Sends a command (@see protocol.h) to the server represented by sock.
  * @arg server a socket connect()ed to a server running the protocol.
@@ -24,7 +23,6 @@ Socket init_connection(unsigned long addr, u_short port);
  * @return the server response code @see protocol.h
  */
 int cryptor_send_command(Socket server, const char *cmd, unsigned int seed, const char *path);
-
 /*
  * Reads further output from the server and returns it in sb.
  * This function should be called only if the return code from a command is
