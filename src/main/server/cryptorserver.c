@@ -135,7 +135,7 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
         free(path);
         return;
     }
-    s = ceil(s/4.) * 4; //closest multiple of 4 greater than size
+    //s = ceil(s/4.) * 4; //closest multiple of 4 greater than size
 
     if(lock_file(file, 0, s)) {
         send(client, RETERRTRANS, 3, MSG_NOSIGNAL);

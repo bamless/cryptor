@@ -20,7 +20,7 @@ int encrypt(File file, int *key, int key_len) {
     if(fget_file_size(file, &size)) {
         return -1;
     }
-    size = ceil(size/4.) * 4;
+    //size = ceil(size/4.) * 4;
 
     MemoryMap *mmap = memory_map(file, size);
     if(!mmap) return -1;
