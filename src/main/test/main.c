@@ -23,7 +23,7 @@
 
 static void thread(void *args) {
 	int err;
-	File file = open_file("D:/Fabrizio/Pictures/crackstation3GB.txt", READ | WRITE, &err);
+	File file = open_file("/mnt/HDD/Fabrizio/Pictures/crackstation3GB.txt", READ | WRITE, &err);
 	if(err) {
 		perr("Error");
 		exit(1);

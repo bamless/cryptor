@@ -3,6 +3,7 @@
 #include "logging.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 /*A threadpool task*/
 typedef struct ThreadPoolTask {
