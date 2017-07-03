@@ -74,7 +74,7 @@ void cryptor_print_more(Socket server) {
 
         //append the last bytes received to last while shifting to the left
         int shift = 4 - MAX(4 - bytes_recv, 0);
-        memcpy(last , last + shift, 4 - shift);
+        memmove(last , last + shift, 4 - shift);
         memcpy(last + (4 - shift), buff + bytes_recv - shift, shift);
 
         if(strcmp(last, "\r\n\r\n") == 0) {
