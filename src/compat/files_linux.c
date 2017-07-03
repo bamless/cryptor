@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-static void set_err(int *);
+static int get_err();
 
 struct Dir {
 	DIR *dir;
@@ -21,7 +21,7 @@ struct Dir {
 
 static void out_of_mem(DIR *unix_dir, int *err) {
 	errno = ENOMEM;
-	set_err(err);
+	*err = get_err();
 	closedir(unix_dir);
 }
 
@@ -29,7 +29,7 @@ Dir* open_dir(const char *path, int *err) {
 	*err = 0;
 	DIR *unix_dir = opendir(path);
 	if(!unix_dir) {
-		set_err(err);
+		*err = get_err();
 		return NULL;
 	}
 
@@ -96,7 +96,7 @@ File open_file(const char *path, int mode,int *err) {
 
 	int file = open(path, flags);
 	if(file < 0) {
-		set_err(err);
+		*err = get_err();
 		return -1;
 	}
 	return file;
@@ -104,37 +104,31 @@ File open_file(const char *path, int mode,int *err) {
 
 int close_file(File file) {
 	if(close(file)) {
-		int err = 0;
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	return 0;
 }
 
 int delete_file(const char *path) {
 	if(unlink(path)) {
-		int err = 0;
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	return 0;
 }
 
 int get_file_size(const char *path, fsize_t *fsize) {
-	struct stat file_stat; int err = 0;
+	struct stat file_stat;
 	if(stat(path, &file_stat)) {
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	*fsize = file_stat.st_size;
 	return 0;
 }
 
 int fget_file_size(File f, fsize_t *fsize) {
-	struct stat file_stat; int err = 0;
+	struct stat file_stat;
 	if(fstat(f, &file_stat)) {
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	*fsize = file_stat.st_size;
 	return 0;
@@ -149,9 +143,7 @@ int lock_file(File f, fsize_t off, fsize_t len) {
 	lock.l_pid = getpid();
 
  	if(fcntl(f, F_SETLK, &lock)) {
-		int err = 0;
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	return 0;
 }
@@ -165,9 +157,7 @@ int unlock_file(File f, fsize_t off, fsize_t len) {
 	lock.l_pid = getpid();
 
  	if(fcntl(f, F_SETLK, &lock)) {
-		int err = 0;
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	return 0;
 }
@@ -188,9 +178,7 @@ char* get_cwd() {
 
 int rename_file(const char *oldpath, const char *newpath) {
 	if(rename(oldpath, newpath)) {
-		int err = 0;
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	return 0;
 }
@@ -205,22 +193,17 @@ char* get_abs(const char *path) {
 	return resolved_dyn;
 }
 
-static void set_err(int *err) {
-	switch (errno) {
+static int get_err() {
+	switch(errno) {
 		case ENOENT:
-			*err = ERR_NOFILE;
-			break;
+			return ERR_NOFILE;
 		case EACCES:
-			*err = ERR_ACCESS;
-			break;
+			return ERR_ACCESS;
 		case ENOTDIR:
-			*err = ERR_NOTDIR;
-			break;
+			return ERR_NOTDIR;
 		case ENAMETOOLONG:
-			*err = ERR_NAMETOOLONG;
-			break;
+			return ERR_NAMETOOLONG;
 		default:
-			*err = ERR_GENERIC;
-			break;
+			return ERR_GENERIC;
 	}
 }

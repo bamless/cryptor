@@ -6,7 +6,7 @@
 #include <string.h>
 #include <windows.h>
 
-static void set_err(int *);
+static int get_err();
 static void fix_slash(char *str);
 
 struct Dir {
@@ -20,7 +20,7 @@ Dir* open_dir(const char *path, int *err) {
 	Dir *dir = malloc(sizeof(Dir));
 	if(!dir) {
 		SetLastError(ERROR_OUTOFMEMORY);
-		set_err(err);
+		*err = get_err();
 		return NULL;
 	}
 
@@ -33,7 +33,7 @@ Dir* open_dir(const char *path, int *err) {
 
 	dir->find = FindFirstFile(szDir, &dir->ffd);
 	if(dir->find == INVALID_HANDLE_VALUE) {
-		set_err(err);
+		*err = get_err();
 		free(dir);
 		return NULL;
 	}
@@ -83,7 +83,7 @@ File open_file(const char *path, int mode, int *err) {
 	}
 	File f = CreateFile(path, acc, share, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if(f == INVALID_HANDLE_VALUE) {
-		set_err(err);
+		*err = get_err();
 		return INVALID_HANDLE_VALUE;
 	}
 	return f;
@@ -91,36 +91,28 @@ File open_file(const char *path, int mode, int *err) {
 
 int close_file(File file) {
 	if(!CloseHandle(file)) {
-		int err = 0;
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	return 0;
 }
 
 int lock_file(File f, fsize_t off, fsize_t len) {
 	if(!LockFile(f, (DWORD) off, (DWORD) (off >> 32), (DWORD) len, (DWORD) (len >> 32))) {
-		int err = 0;
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	return 0;
 }
 
 int unlock_file(File f, fsize_t off, fsize_t len) {
 	if(!UnlockFile(f, (DWORD) off, (DWORD) (off >> 32), (DWORD) len, (DWORD) (len >> 32))) {
-		int err = 0;
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	return 0;
 }
 
 int delete_file(const char *path) {
 	if(!DeleteFile((LPCTSTR) path)) {
-		int err = 0;
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	return 0;
 }
@@ -133,11 +125,9 @@ static void fix_slash(char *str) {
 }
 
 int get_file_size(const char *path, fsize_t *fsize) {
-	int err = 0;
 	HANDLE hFile = CreateFile(path, 0, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if(hFile == INVALID_HANDLE_VALUE) {
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	fget_file_size(hFile, fsize);
 	CloseHandle(hFile);
@@ -170,9 +160,7 @@ char* get_cwd() {
 
 int rename_file(const char *oldpath, const char *newpath) {
 	if(!MoveFile(oldpath, newpath)) {
-		int err = 0;
-		set_err(&err);
-		return err;
+		return get_err();
 	}
 	return 0;
 }
@@ -188,22 +176,17 @@ char* get_abs(const char *path) {
 	return resolved;
 }
 
-static void set_err(int *err) {
+static int get_err() {
 	switch(GetLastError()) {
 		case ERROR_FILE_NOT_FOUND:
-			*err = ERR_NOFILE;
-			break;
+			return ERR_NOFILE;
 		case ERROR_DIRECTORY:
-			*err = ERR_NOTDIR;
-			break;
+			return ERR_NOTDIR;
 		case ERROR_ACCESS_DENIED:
-			*err = ERR_ACCESS;
-			break;
+			return ERR_ACCESS;
 		case ERROR_MRM_FILEPATH_TOO_LONG:
-			*err = ERR_NAMETOOLONG;
-			break;
+			return ERR_NAMETOOLONG;
 		default:
-			*err = ERR_GENERIC;
-			break;
+			return ERR_GENERIC;
 	}
 }
