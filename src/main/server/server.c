@@ -29,7 +29,7 @@ typedef struct Config {
 static int reload_requested = 0; //flags that indicates that the user wants to reload the config file
 static int shut_down = 0;
 static void signal_handler(int signal) {
-	dlogf("catched signal %d\n", signal);
+	dlogf("caught signal %d\n", signal);
 	if(signal == SIGHUP)
 		reload_requested = 1;
 	if(signal == SIGTERM || signal == SIGINT)
