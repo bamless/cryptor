@@ -85,16 +85,23 @@ void next_dir(Dir *dir, DirEntry *entry) {
 	entry->name[255] = '\0'; //null terminate just in case strncpy truncates
 }
 
-File open_file(const char *path, int mode,int *err) {
+File open_file(const char *path, int mode, int *err) {
 	int flags = 0; *err = 0;
-	if((mode & READ) && (mode & WRITE))
+	if((mode & READ) && (mode & WRITE)) {
 		flags |= O_RDWR;
-	else if(mode & READ)
+	} else if(mode & READ) {
 		flags |= O_RDONLY;
-	else if(mode & WRITE)
+	} else if(mode & WRITE) {
 		flags |= O_WRONLY;
+	}
 
-	int file = open(path, flags);
+	mode_t m = 0;
+	if(mode & CREATE) {
+		flags |= O_CREAT;
+		m = 0744;
+	}
+
+	int file = open(path, flags, m);
 	if(file < 0) {
 		*err = get_err();
 		return -1;

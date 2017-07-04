@@ -32,6 +32,6 @@ void threadpool_destroy(ThreadPool *tp, enum shutdown_type type);
  * @return ERR_SHUTDOWN if the threadpool is shutting down, ERR_OUTOFMEM if failed to allocate,
  *         0 on success
  */
-int threadpool_add_task(ThreadPool *tp, void (*task_func)(void *, int), void *args);
+int threadpool_add_task(ThreadPool *tp, void (*task_func)(void *), void *args);
 
 #endif

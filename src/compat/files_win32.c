@@ -81,7 +81,15 @@ File open_file(const char *path, int mode, int *err) {
 		acc |= GENERIC_WRITE;
 		share |= FILE_SHARE_WRITE;
 	}
-	File f = CreateFile(path, acc, share, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	DWORD creat_disp = 0;
+	if(mode & CREATE) {
+		creat_disp = OPEN_ALWAYS;
+	} else {
+		creat_disp = OPEN_EXISTING;
+	}
+
+	File f = CreateFile(path, acc, share, NULL, creat_disp, FILE_ATTRIBUTE_NORMAL, NULL);
 	if(f == INVALID_HANDLE_VALUE) {
 		*err = get_err();
 		return INVALID_HANDLE_VALUE;

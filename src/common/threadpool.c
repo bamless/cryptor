@@ -8,7 +8,7 @@
 /*A threadpool task*/
 typedef struct ThreadPoolTask {
     struct ThreadPoolTask *next;    /*Pointer to next task*/
-    void (*task_func)(void *, int); /*The function of the task, to be executed from a worker thread*/
+    void (*task_func)(void *); /*The function of the task, to be executed from a worker thread*/
     void *args;                     /*The args to be passed to the function*/
 } ThreadPoolTask;
 
@@ -24,14 +24,8 @@ struct ThreadPool {
     CondVar tasks_cond;             /*Condition var for signaling the thrads when a task is inserted*/
 };
 
-/*struct that will be passed to the working thread on creation*/
-struct wthread_arg {
-    ThreadPool *tp;                 /*The threadpool of the working thread*/
-    int id;                         /*The id of the working thread*/
-};
-
 static void init_threads(ThreadPool *);
-static void worker_thread(void *);
+static void worker_thread(void *, void **);
 
 ThreadPool* threadpool_create(int thread_count) {
     ThreadPool *tp = malloc(sizeof(ThreadPool));
@@ -56,10 +50,7 @@ ThreadPool* threadpool_create(int thread_count) {
 
 static void init_threads(ThreadPool *tp) {
     for(int i = 0; i < tp->thread_count; i++) {
-        struct wthread_arg *wtarg = malloc(sizeof(struct wthread_arg));
-        wtarg->tp = tp;
-        wtarg->id = i;
-        thread_create(&tp->threads[i], &worker_thread, wtarg);
+        thread_create(&tp->threads[i], &worker_thread, tp, NULL);
     }
 }
 
@@ -95,7 +86,7 @@ void threadpool_destroy(ThreadPool *tp, enum shutdown_type type) {
     free(tp);
 }
 
-int threadpool_add_task(ThreadPool *tp, void (*task_func)(void *, int), void *args) {
+int threadpool_add_task(ThreadPool *tp, void (*task_func)(void *), void *args) {
     ThreadPoolTask *task = malloc(sizeof(ThreadPoolTask));
     if(!task) return ERR_OUTOFMEM;
     task->next = NULL;
@@ -125,12 +116,8 @@ int threadpool_add_task(ThreadPool *tp, void (*task_func)(void *, int), void *ar
     return 0;
 }
 
-static void worker_thread(void *worker_thread_arg) {
-    struct wthread_arg *wtarg = worker_thread_arg;
-
-    ThreadPool *tp = wtarg->tp;
-    int id = wtarg->id;
-    free(wtarg);
+static void worker_thread(void *threadpool, void **retval) {
+    ThreadPool *tp = threadpool;
 
     for(;;) {
         thread_lock_mutex(&tp->tp_lock);
@@ -152,10 +139,10 @@ static void worker_thread(void *worker_thread_arg) {
 
         thread_unlock_mutex(&tp->tp_lock);
 
-        void (*task_func)(void *, int) = task->task_func;
+        void (*task_func)(void *) = task->task_func;
         void *args = task->args;
         free(task); //free the task struct
 
-        (*task_func)(args, id);
+        (*task_func)(args);
     }
 }

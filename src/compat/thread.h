@@ -10,7 +10,7 @@
 #endif
 
 /*
- * Cross platform thread library. The error checking is handled by the functions
+ * Cross platform thread module. The error checking is handled by the functions
  */
 
 //Threads
@@ -21,7 +21,15 @@ typedef pthread_t Thread;
 typedef HANDLE Thread;
 #endif
 
-void thread_create(Thread *thread, void (*func)(void *), void *arg);
+/*
+ * Creates a thread that starts executing the function `func`
+ * @arg func the thread starting pointer. It takes `arg` and `retval` as inputs and returns void.
+ * @arg arg a generic pointer to a user allocated argument. It will be passed to `func`
+ * @arg retval a pointer to a pointer used to return a value at the calling thread.
+        It will be passed to `func`.
+ */
+void thread_create(Thread *thread, void (*func)(void *, void **), void *arg, void **retval);
+/**Waits for the thread to finish*/
 void thread_join(Thread *thread);
 
 // Synchronization

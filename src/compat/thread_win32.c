@@ -8,15 +8,17 @@
 #include <synchapi.h>
 
 struct funcargs {
-    void (*func)(void *);
+    void (*func)(void *, void **);
     void *args;
+    void **retval;
 };
 static DWORD WINAPI start_func_impl(void *args);
 
-void thread_create(Thread *thread, void (*func)(void *), void *arg) {
+void thread_create(Thread *thread, void (*func)(void *, void **), void *arg, void **retval) {
     struct funcargs *fa = malloc(sizeof(struct funcargs));
     fa->func = func;
     fa->args = arg;
+    fa->retval = retval;
 
     DWORD tid;
     *thread = CreateThread(NULL, 0, &start_func_impl, fa, 0, &tid);
@@ -29,10 +31,11 @@ void thread_create(Thread *thread, void (*func)(void *), void *arg) {
 
 static DWORD WINAPI start_func_impl(void *func_args) {
     struct funcargs *fa = (struct funcargs *) func_args;
-    void (*func)(void *) = fa->func;
+    void (*func)(void *, void **) = fa->func;
     void *args = fa->args;
+    void **retval = fa->retval;
     free(fa);
-    (*func)(args);
+    (*func)(args, retval);
     return 0;
 }
 

@@ -14,6 +14,8 @@
 #include <inttypes.h>
 #include <math.h>
 
+#define KEY_LEN 8 //the key length in integers
+
 #ifdef _WIN32
 static int rand_r(unsigned int *seed);
 #endif
@@ -110,12 +112,18 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
 
 static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **path);
 static void generate_key(unsigned int seed, int *key, int key_len);
-static void change_name(const char *name, int is_decrypt);
+static char* get_out_name(const char *name, int is_decrypt);
+static int strendswith(const char *str, const char *substr);
 
 static void handle_encrytion_commands(Socket client, int is_decrypt) {
     char *path = NULL;
     unsigned int seed;
     if(parse_encryption_cmdline(client, &seed, &path)) {
+        send(client, RETERR, 3, MSG_NOSIGNAL);
+        if(path) free(path);
+        return;
+    }
+    if(is_decrypt && !strendswith(path, "_enc")) {
         send(client, RETERR, 3, MSG_NOSIGNAL);
         if(path) free(path);
         return;
@@ -137,7 +145,6 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
         free(path);
         return;
     }
-    //s = ceil(s/4.) * 4; //closest multiple of 4 greater than size
 
     if(lock_file(file, 0, s)) {
         send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
@@ -146,21 +153,25 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
         return;
     }
 
-    int key[8];
-    generate_key(seed, key, 8);
-    if(encrypt(file, key, 8)) {
+    int key[KEY_LEN];
+    generate_key(seed, key, KEY_LEN);
+    char *out = get_out_name(path, is_decrypt);
+    if(encrypt(file, out, key, KEY_LEN)) {
         send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
         unlock_file(file, 0, s);
         close_file(file);
         free(path);
+        free(out);
         return;
     }
 
     unlock_file(file, 0, s);
     close_file(file);
 
-    change_name(path, is_decrypt);
+    delete_file(path);
+
     free(path);
+    free(out);
 
     send(client, RETOK, 3, MSG_NOSIGNAL);
 }
@@ -200,26 +211,31 @@ static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **pa
     return 0;
 }
 
+static int strendswith(const char *str, const char *substr) {
+    size_t str_len = strlen(str), substr_len = strlen(substr);
+    if(str_len < substr_len) return 0;
+    return strcmp(str + (str_len - substr_len), substr) == 0;
+}
+
 static void generate_key(unsigned int seed, int *key, int key_len) {
     for(int i = 0; i < key_len; i++) {
         key[i] = rand_r(&seed);
     }
 }
 
-static void change_name(const char *name, int is_decrypt) {
-    char *new;
+static char* get_out_name(const char *name, int is_decrypt) {
+    char *out;
     if(is_decrypt) {
         int len = strlen(name) - 3;
-        new = malloc(len);
-        strncpy(new, name, len - 1);
-        new[len - 1] = '\0';
+        out = malloc(len);
+        strncpy(out, name, len - 1);
+        out[len - 1] = '\0';
     } else {
-        new = malloc(strlen(name) + 5);
-        strcpy(new, name);
-        strcat(new, "_enc");
+        out = malloc(strlen(name) + 5);
+        strcpy(out, name);
+        strcat(out, "_enc");
     }
-    rename_file(name, new);
-    free(new);
+    return out;
 }
 
 #ifdef _WIN32
@@ -251,6 +267,15 @@ Socket init_server_socket(u_short port) {
 		socket_cleanup();
 		exit(1);
 	}
+
+#ifdef __unix
+	int optval = 1;
+	if(setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, (void *) &optval, sizeof(optval))) {
+		perr_sock("Error socket");
+		exit(1);
+	}
+#endif
+
 	if(bind(server_sock, (struct sockaddr *) &server, sizeof(server))) {
 		perr_sock("Error bind");
 		socket_cleanup();

@@ -9,6 +9,6 @@
  * @arg key_len the length of the 'key' argument
  * @return 0 on success, non-zero on failure
  */
-int encrypt(File f, int *key, int key_len);
+int encrypt(File plainfd, const char *out_name, int *key, int key_len);
 
 #endif

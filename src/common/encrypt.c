@@ -9,41 +9,53 @@
 #include <math.h>
 #include <omp.h>
 
+
+#include "logging.h"
+
 //dimension, in bytes, of a thread unit of execution
 #define PAR_BLCK (256 * 1024)
 
-int encrypt(File file, int *key, int key_len) {
-    if(((key_len * 4) & (key_len * 4 - 1)) != 0 || (key_len * 4) > PAR_BLCK)
+int encrypt(File plainfd, const char *out_name, int *key, int key_len) {
+    if(((key_len * 4) & (key_len * 4 - 1)) != 0 || (key_len * 4) > PAR_BLCK || out_name == NULL)
         return -1;
 
     fsize_t size;
-    if(fget_file_size(file, &size)) {
-        return -1;
-    }
-    //size = ceil(size/4.) * 4;
+    if(fget_file_size(plainfd, &size)) return -1;
 
-    MemoryMap *mmap = memory_map(file, size);
-    if(!mmap) return -1;
+    int err = 0;
+    File cipherfd = open_file(out_name, READ | WRITE | CREATE, &err);
+    if(err) return -1;
+    if(lock_file(cipherfd, 0, size)) return -1;
+
+    MemoryMap *plain = memory_map(plainfd, size, MMAP_READ);
+    if(!plain) return -1;
+    MemoryMap *cipher = memory_map(cipherfd, size, MMAP_READ | MMAP_WRITE);
+    if(!cipher) return -1;
+
 
     fsize_t num_chunks = ceil(size/((float) PAR_BLCK));
-
-    //int numthreads = num_chunks > 4 ? 4 : num_chunks;
-    #pragma omp parallel for //num_threads(numthreads)
+    #pragma omp parallel for
     for(fsize_t n = 0; n < num_chunks; n++) {
         fsize_t from = n * PAR_BLCK;
         fsize_t len = (from + PAR_BLCK) > size ? size - from : PAR_BLCK;
 
-        int *chunk = mmap_mapview(mmap, from, len);
-        if(chunk == NULL) perr("Error encrypt");
+        int *plain_chunk = mmap_mapview(plain, from, len);
+        if(plain_chunk == NULL) perr("Error encrypt");
+        int *cipher_chunk = mmap_mapview(cipher, from, len);
+        if(cipher_chunk == NULL) perr("Error encrypt");
 
         fsize_t len32 = ceil(len/4.);
         for(int i = 0; i < len32; i++) {
-            chunk[i] ^= key[i % key_len];
+            cipher_chunk[i] = plain_chunk[i] ^ key[i % key_len];
         }
 
-        mmap_unmapview(chunk);
+        mmap_unmapview(plain_chunk);
+        mmap_unmapview(cipher_chunk);
     }
 
-    memory_unmap(mmap);
+    memory_unmap(plain);
+    memory_unmap(cipher);
+    unlock_file(cipherfd, 0, size);
+    close_file(cipherfd);
     return 0;
 }

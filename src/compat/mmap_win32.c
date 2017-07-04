@@ -8,8 +8,14 @@ struct MemoryMap {
     HANDLE mapping;
 };
 
-MemoryMap *memory_map(File f, fsize_t length) {
-    HANDLE mapping = CreateFileMapping(f, NULL, PAGE_READWRITE, (DWORD) (length >> 32), (DWORD) length, NULL);
+MemoryMap *memory_map(File f, fsize_t length, int flags) {
+    DWORD prot = 0;
+    if((flags & MMAP_READ) || ((flags & MMAP_READ) && (flags & MMAP_WRITE))) {
+        prot = PAGE_READWRITE;
+    } else if(flags & MMAP_READ) {
+        prot = PAGE_READONLY;
+    }
+    HANDLE mapping = CreateFileMapping(f, NULL, prot, (DWORD) (length >> 32), (DWORD) length, NULL);
     if(mapping == NULL) return NULL;
 
     MemoryMap *mmap = malloc(sizeof(MemoryMap));

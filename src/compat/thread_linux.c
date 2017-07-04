@@ -12,20 +12,22 @@ type and then encapsulates it in a platform-specific function with the platform'
 return type. The funcargs struct takes in the pointer to our platform agnostic
 function and void* args and gets passed as an input to the plaform-specific start func.*/
 struct funcargs {
-    void (*func)(void *);
+    void (*func)(void *, void **);
     void *args;
+    void **retval;
 };
 static void* start_func_impl(void *func_args);
 //pthread functions are not guaranteed to set errno, so we must obtain the error msg from the error returned
 static void error_check(const char *msg, int err);
 
-void thread_create(Thread *thread, void (*func)(void *), void *arg) {
+void thread_create(Thread *thread, void (*func)(void *, void **), void *arg, void **retval) {
     pthread_t id;
 
     struct funcargs *fa = malloc(sizeof(struct funcargs));
     if(!fa) error_check("Error: thread_create", ENOMEM);
     fa->func = func;
     fa->args = arg;
+    fa->retval = retval;
 
     int err = pthread_create(&id, NULL, &start_func_impl, fa);
     error_check("Error: thread_create", err);
@@ -40,10 +42,11 @@ void thread_join(Thread *thread) {
 
 static void* start_func_impl(void *func_args) {
     struct funcargs *fa = (struct funcargs *) func_args;
-    void (*func)(void *) = fa->func;
+    void (*func)(void *, void **) = fa->func;
     void *args = fa->args;
+    void **retval = fa->retval;
     free(fa);
-    (*func)(args);
+    (*func)(args, retval);
     return NULL;
 }
 

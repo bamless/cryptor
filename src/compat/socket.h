@@ -34,13 +34,13 @@ typedef int socklen_t; // needed in roder to use accept in a portable way (avoid
 #define socket_startup()  do { \
         WSADATA data; \
         if(WSAStartup(MAKEWORD(2,2), &data)) { \
-            perr_sock("Error: socket_startup"); \
+            perr_sock("Error: socket startup"); \
             exit(1); \
         } \
     } while(0)
 #define socket_cleanup() do { \
         if(WSACleanup()) { \
-            perr_sock("Error: socket_cleanup"); \
+            perr_sock("Error: socket cleanup"); \
             exit(1); \
         } \
     } while(0)

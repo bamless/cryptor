@@ -57,9 +57,10 @@ typedef HANDLE File;
 
 #define READ 1
 #define WRITE 2
+#define CREATE 4
 
-/*Opens an *existing* file at path path. If the file is not found or an error occurs
- *err is nonzero and the return value of File is undefined.*/
+/*Opens a file at path path. If the file is not found or an error occurs
+ *err is nonzero and the return value of File is undefined. It accepts flags.*/
 File open_file(const char *path, int mode, int *err);
 int close_file(File file);
 

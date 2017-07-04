@@ -15,8 +15,6 @@
 #include <string.h>
 
 #define DEFAULT_THREADS 20
-//Default conf file to be searched for if no conf file is provided
-#define DEFAULT_CFG_FILE "cryptor.conf"
 
 typedef struct Config {
 	char *conf_file;	/*The configuration file path*/
@@ -29,11 +27,15 @@ typedef struct Config {
 #ifdef __unix
 #include <signal.h>
 static int reload_requested = 0; //flags that indicates that the user wants to reload the config file
+static int shut_down = 0;
 static void signal_handler(int signal) {
-	dlog("catched SIGHUP");
-	reload_requested = 1; //sighup is going to set the flag
+	dlogf("catched signal %d\n", signal);
+	if(signal == SIGHUP)
+		reload_requested = 1;
+	if(signal == SIGTERM || signal == SIGINT)
+		shut_down = 1;
 }
-static void reload_cfg(Config *oldcfg, Socket *server_sock);
+static void reload_cfg(Config *oldcfg, Socket *server_sock, ThreadPool **tp);
 static void daemonize();
 #endif
 
@@ -41,7 +43,7 @@ static void usage(const char *exec_name);
 static void init_config(Config *cfg);
 static void free_config(Config *cfg);
 static void parse_args_and_cfg(int argc, char **argv, Config *cfg);
-static void threadpool_handle_connection(void *incoming_conn, int id);
+static void threadpool_handle_connection(void *incoming_conn);
 
 int main(int argc, char **argv) {
 #ifdef __unix
@@ -49,7 +51,7 @@ int main(int argc, char **argv) {
 	sa.sa_flags = 0; //we want SIGHUP to interrupt the accept syscall, so no SA_RESTART flag
 	sigemptyset(&sa.sa_mask);
 	sa.sa_handler = &signal_handler;
-	if(sigaction(SIGHUP, &sa, NULL) == -1) {
+	if(sigaction(SIGHUP, &sa, NULL) || sigaction(SIGTERM, &sa, NULL) || sigaction(SIGINT, &sa, NULL)) {
 		perr("Error");
 		exit(1);
 	}
@@ -68,7 +70,7 @@ int main(int argc, char **argv) {
 	server_sock = init_server_socket(htons(cfg.port));
 
 #ifdef __unix
-	daemonize();
+ 	daemonize();
 #endif
 
 	ThreadPool *tp = threadpool_create(cfg.thread_count);
@@ -79,8 +81,9 @@ int main(int argc, char **argv) {
 #ifdef __unix
 		if(reload_requested) {
 			dlog("reloading configs...");
-			reload_cfg(&cfg, &server_sock);
+			reload_cfg(&cfg, &server_sock, &tp);
 		}
+		if(shut_down) break;
 #endif
 		if(!is_socket_valid(client_sock)) continue;
 
@@ -96,18 +99,16 @@ int main(int argc, char **argv) {
 	free_config(&cfg);
 }
 
-static void threadpool_handle_connection(void *incoming_conn, int id) {
-	dlogf("Thread %d is handling connection\n", id);
+static void threadpool_handle_connection(void *incoming_conn) {
 	Socket client = *((Socket *) incoming_conn);
 	free(incoming_conn);
 	cryptor_handle_connection(client);
-	dlogf("Thread %d done\n", id);
 }
 
 static void init_config(Config *cfg) {
-	cfg->conf_file = get_abs(DEFAULT_CFG_FILE);
 	cfg->port = DEFAULT_PORT;
 	cfg->thread_count = DEFAULT_THREADS;
+	cfg->conf_file = NULL;
 	cfg->pwd = NULL; //this is a mandatory arg, so we don't need a default value
 }
 
@@ -131,7 +132,6 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 				if(cfg->thread_count == 0) usage(argv[0]);
 				break;
 			case 'f':
-				if(cfg->conf_file) free(cfg->conf_file);
 				cfg->conf_file = get_abs(optarg); //retrieve the absolute path of the config file
 				break;
 			case '?':
@@ -147,7 +147,8 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 				break;
 		}
 	}
-	read_cfg_file(cfg);
+	if(cfg->conf_file != NULL)
+		read_cfg_file(cfg);
 	//If this is NULL it means both the config file and the terminal args didn't specify a directory
 	if(cfg->pwd == NULL) usage(argv[0]); //the -c option is mandatory.
 }
@@ -224,16 +225,15 @@ static void usage(const char *exec_name) {
 /* Linux specific stuff */
 
 #ifdef __unix
-static void reload_cfg(Config *oldcfg, Socket *server_sock) {
+static void reload_cfg(Config *oldcfg, Socket *server_sock, ThreadPool **tp) {
 	Config newcfg;
+	init_config(&newcfg);
 	newcfg.conf_file = strdup(oldcfg->conf_file);
-	newcfg.port = DEFAULT_PORT;
-	newcfg.thread_count = DEFAULT_THREADS;
-	newcfg.pwd = NULL;
+	newcfg.pwd = strdup(oldcfg->pwd);
 
 	read_cfg_file(&newcfg);
 
-	if(newcfg.pwd != NULL && strcmp(newcfg.pwd, oldcfg->pwd) != 0) {
+	if(strcmp(newcfg.pwd, oldcfg->pwd) != 0) {
 		printf("%s\n", newcfg.pwd);
 		if(change_dir(newcfg.pwd)) {
 			perr("Error chdir");
@@ -243,6 +243,10 @@ static void reload_cfg(Config *oldcfg, Socket *server_sock) {
 	if(newcfg.port != oldcfg->port) {
 		socket_close(*server_sock);
 		*server_sock = init_server_socket(htons(newcfg.port));
+	}
+	if(newcfg.thread_count != oldcfg->thread_count) {
+		threadpool_destroy(*tp, HARD_SHUTDOWN);
+		*tp = threadpool_create(newcfg.thread_count);
 	}
 
 	free_config(oldcfg);
