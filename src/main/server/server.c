@@ -175,7 +175,6 @@ static void read_cfg_file(Config *cfg) {
 				return;
 			}
 		} else if(strcmp(opt, "directory") == 0) {
-			if(cfg->pwd) free(cfg->pwd);
 			cfg->pwd = malloc(1024);
 			strncpy(cfg->pwd, optarg, 1024);
 			char *remaining;
@@ -230,7 +229,7 @@ static void reload_cfg(Config *oldcfg, Socket *server_sock) {
 	newcfg.port = DEFAULT_PORT;
 	newcfg.thread_count = DEFAULT_THREADS;
 	newcfg.pwd = NULL;
-	
+
 	read_cfg_file(&newcfg);
 
 	if(newcfg.pwd != NULL && strcmp(newcfg.pwd, oldcfg->pwd) != 0) {
@@ -244,7 +243,7 @@ static void reload_cfg(Config *oldcfg, Socket *server_sock) {
 		socket_close(*server_sock);
 		*server_sock = init_server_socket(htons(newcfg.port));
 	}
-	
+
 	free_config(oldcfg);
 	*oldcfg = newcfg;
 	reload_requested = 0;
