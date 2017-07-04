@@ -8,7 +8,7 @@
 /*A threadpool task*/
 typedef struct ThreadPoolTask {
     struct ThreadPoolTask *next;    /*Pointer to next task*/
-    void (*task_func)(void *); /*The function of the task, to be executed from a worker thread*/
+    void (*task_func)(void *);      /*The function of the task, to be executed from a worker thread*/
     void *args;                     /*The args to be passed to the function*/
 } ThreadPoolTask;
 
