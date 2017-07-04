@@ -104,6 +104,13 @@ static void threadpool_handle_connection(void *incoming_conn, int id) {
 	dlogf("Thread %d done\n", id);
 }
 
+static void init_config(Config *cfg) {
+	cfg->conf_file = get_abs(DEFAULT_CFG_FILE);
+	cfg->port = DEFAULT_PORT;
+	cfg->thread_count = DEFAULT_THREADS;
+	cfg->pwd = NULL; //this is a mandatory arg, so we don't need a default value
+}
+
 static void read_cfg_file(Config *cfg);
 static u_short parse_port(const char *portstr);
 static int parse_numthreads(const char *numthreads_str);
@@ -124,7 +131,7 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 				if(cfg->thread_count == 0) usage(argv[0]);
 				break;
 			case 'f':
-				free(cfg->conf_file);
+				if(cfg->conf_file) free(cfg->conf_file);
 				cfg->conf_file = get_abs(optarg); //retrieve the absolute path of the config file
 				break;
 			case '?':
@@ -175,12 +182,13 @@ static void read_cfg_file(Config *cfg) {
 				return;
 			}
 		} else if(strcmp(opt, "directory") == 0) {
+			if(cfg->pwd) free(cfg->pwd);
 			cfg->pwd = malloc(1024);
 			strncpy(cfg->pwd, optarg, 1024);
 			char *remaining;
 			while((remaining = strtok(NULL, " "))) {
-				strcat(cfg->pwd, " ");
-				strcat(cfg->pwd, remaining);
+				strncat(cfg->pwd, " ", 1024);
+				strncat(cfg->pwd, remaining, 1024);
 			}
 			cfg->pwd[strlen(cfg->pwd) - 1] = '\0';
 		}
@@ -201,13 +209,6 @@ static int parse_numthreads(const char *numthreads_str) {
 	if((*err != '\0' && *err != '\n') || tc < 1 || tc > INT_MAX)
 		return 0;
 	return (int) tc;
-}
-
-static void init_config(Config *cfg) {
-	cfg->conf_file = get_abs(DEFAULT_CFG_FILE);
-	cfg->port = DEFAULT_PORT;
-	cfg->thread_count = DEFAULT_THREADS;
-	cfg->pwd = NULL; //this is a mandatory arg, so we don't need a default value
 }
 
 static void free_config(Config *cfg) {

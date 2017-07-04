@@ -30,7 +30,7 @@ struct wthread_arg {
     int id;                         /*The id of the working thread*/
 };
 
-static void init_threads(Thread *, ThreadPool *);
+static void init_threads(ThreadPool *);
 static void worker_thread(void *);
 
 ThreadPool* threadpool_create(int thread_count) {
@@ -45,20 +45,22 @@ ThreadPool* threadpool_create(int thread_count) {
     }
     thread_init_cond(&tp->tasks_cond);
     thread_init_mutex(&tp->tp_lock);
+
     //start the worker threads
-    init_threads(tp->threads, tp);
+    thread_lock_mutex(&tp->tp_lock);
+    init_threads(tp);
+    thread_unlock_mutex(&tp->tp_lock);
+
     return tp;
 }
 
-static void init_threads(Thread *threads, ThreadPool *tp) {
-    thread_lock_mutex(&tp->tp_lock);
+static void init_threads(ThreadPool *tp) {
     for(int i = 0; i < tp->thread_count; i++) {
         struct wthread_arg *wtarg = malloc(sizeof(struct wthread_arg));
         wtarg->tp = tp;
         wtarg->id = i;
-        thread_create(&threads[i], &worker_thread, wtarg);
+        thread_create(&tp->threads[i], &worker_thread, wtarg);
     }
-    thread_unlock_mutex(&tp->tp_lock);
 }
 
 void threadpool_destroy(ThreadPool *tp, enum shutdown_type type) {
