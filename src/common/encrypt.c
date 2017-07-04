@@ -12,11 +12,13 @@
 
 #include "logging.h"
 
+#define INT_LEN sizeof(int) //int length in bytes
+
 //dimension, in bytes, of a thread unit of execution
 #define PAR_BLCK (256 * 1024)
 
 int encrypt(File plainfd, const char *out_name, int *key, int key_len) {
-    if(((key_len * 4) & (key_len * 4 - 1)) != 0 || (key_len * 4) > PAR_BLCK || out_name == NULL)
+    if(((key_len * INT_LEN) & (key_len * INT_LEN - 1)) != 0 || (key_len * INT_LEN) > PAR_BLCK || out_name == NULL)
         return -1;
 
     fsize_t size;
@@ -44,7 +46,7 @@ int encrypt(File plainfd, const char *out_name, int *key, int key_len) {
         int *cipher_chunk = mmap_mapview(cipher, from, len);
         if(cipher_chunk == NULL) perr("Error encrypt");
 
-        fsize_t len32 = ceil(len/4.);
+        fsize_t len32 = ceil(len/(float) INT_LEN);
         for(int i = 0; i < len32; i++) {
             cipher_chunk[i] = plain_chunk[i] ^ key[i % key_len];
         }
