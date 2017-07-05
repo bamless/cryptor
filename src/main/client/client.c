@@ -123,7 +123,10 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 			usage(argv[0]);
 			break;
 	}
-	if(args->cmd == NULL) usage(argv[0]);
+	if(args->cmd == NULL) {
+		elog("Process directory option missing.");
+		usage(argv[0]);
+	}
 }
 
 static char* str_retcode(int retcode) {
