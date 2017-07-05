@@ -225,6 +225,9 @@ static void usage(const char *exec_name) {
 
 #ifdef __unix
 static void reload_cfg(Config *oldcfg, Socket *server_sock, ThreadPool **tp) {
+	//the program doesn't have a conf file
+	if(!oldcfg->conf_file) return;
+
 	Config newcfg;
 	init_config(&newcfg);
 	newcfg.conf_file = strdup(oldcfg->conf_file);
