@@ -80,7 +80,7 @@ static void send_thread_command(void *args, void **retval) {
 	ThreadArgs *t_args = args;
 
 	**ret_code = cryptor_send_command(t_args->s, t_args->args.cmd, t_args->args.seed, t_args->args.path);
-	
+
 	free(args);
 }
 
@@ -89,7 +89,7 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 
 	//get the ip addr and the port
 	strtoipandport(argv[argc - 1], &args->host_addr, &args->host_port);
-	if(args->host_addr < 0) usage(argv[0]);
+	if(args->host_addr == INADDR_NONE) usage(argv[0]);
 	if(args->host_port == 0) args->host_port = htons(DEFAULT_PORT);
 
 	//get the options
@@ -152,7 +152,6 @@ static char* str_retcode(int retcode) {
 static void strtoipandport(char *hostandport, unsigned long *ip, u_short *port) {
 	char *hoststr = strtok(hostandport, ":");
 	*ip = inet_addr(hoststr);
-	if(*ip == INADDR_NONE) *ip = -1;
 
 	char *portstr = strtok(NULL, ":");
 	if(portstr == NULL) {
