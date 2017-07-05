@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 	sigemptyset(&sa.sa_mask);
 	sa.sa_handler = &signal_handler;
 	if(sigaction(SIGHUP, &sa, NULL) || sigaction(SIGTERM, &sa, NULL) || sigaction(SIGINT, &sa, NULL)) {
-		perr("Error");
+		perr("Error signals");
 		exit(1);
 	}
 #endif
@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
 	parse_args_and_cfg(argc, argv, &cfg);
 
 	if(change_dir(cfg.pwd)) {
-		perr("Error");
+		perr("Error changing dir");
 		exit(1);
 	}
 
@@ -132,6 +132,10 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 				break;
 			case 'f':
 				cfg->conf_file = get_abs(optarg); //retrieve the absolute path of the config file
+				if(!cfg->conf_file) {
+					perr("Config file");
+					usage(argv[0]);
+				}
 				break;
 			case '?':
 				if(isprint(optopt))
@@ -155,7 +159,7 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 static void read_cfg_file(Config *cfg) {
 	FILE *file = fopen(cfg->conf_file, "r");
 	if(file == NULL) {
-		elog("No config file found");
+		perr("Config file");
 		return;
 	}
 	logsf("Reading config file %s\n", cfg->conf_file);
