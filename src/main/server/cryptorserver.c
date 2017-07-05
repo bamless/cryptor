@@ -130,7 +130,7 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
     }
 
     int err;
-    File file = open_file(path, READ, &err);
+    File file = open_file(path, READ | WRITE, &err); //WRITE is needed for acquaring an exclusive lock
     if(err) {
         char *errn = (err == ERR_NOFILE) ? RETERR : RETERRTRANS;
         send(client, errn, 3, MSG_NOSIGNAL);

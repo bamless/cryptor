@@ -64,6 +64,7 @@ typedef HANDLE File;
 File open_file(const char *path, int mode, int *err);
 int close_file(File file);
 
+/**It acquire an *exclusive* lock on file `f`. The file must be opened at least read/write*/
 int lock_file(File f, fsize_t off, fsize_t len);
 int unlock_file(File f, fsize_t off, fsize_t len);
 
