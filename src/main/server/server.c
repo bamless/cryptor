@@ -3,7 +3,6 @@
 #include "error.h"
 #include "threadpool.h"
 #include "files.h"
-//cyptor protocol headers
 #include "protocol.h"
 #include "cryptorserver.h" /*cryptor_handle_connection(Socket socket)*/
 
@@ -264,8 +263,8 @@ static void daemonize() {
 	//exit the parent, now we are detached from the terminal
 	if(pid > 0) exit(0);
 
-	//become a process group leader and a session leader, we are guaranteed from
-	//the previous fork that we are not PG leaders, so this shouldn't fail
+	//become  a session leader, we are guaranteed from the previous fork that
+	//we are not PG leaders, so this shouldn't fail
 	pid_t sid = setsid();
 	if(sid < 0) {
 		perr("Error setsid");
@@ -280,10 +279,11 @@ static void daemonize() {
 	}
 	if(pid > 0) exit(0); //let the session leader exit, now we can't ever re-aquire a controlling terminal
 
-	umask(0); //reset the umask in case we inherited some weird mask
+	umask(0); //reset the umask for full control on created files
 
 	//close stdin, stdout and stderr and reopen them on /dev/null
-	//we can open some log file as stdout/err, but for now close them.
+	//we can open some log file as stdout/err, or maybe us syslogd,
+	//but for now close them.
 	int nullfd = open("/dev/null", O_RDWR);
 	dup2(nullfd, 0);
 	dup2(nullfd, 1);

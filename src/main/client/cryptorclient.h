@@ -5,7 +5,7 @@
 #include "stringbuf.h"
 
 /*
- *The actual implementation of the protocol
+ * The actual implementation of the protocol
  */
 
 /*

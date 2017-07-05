@@ -1,17 +1,17 @@
 #ifndef FILES_H
 #define FILES_H
 
-
+/**Abstract the type of the file size*/
 #ifdef __unix
 #include <sys/types.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-typedef off_t fsize_t;
+typedef off_t fsize_t;    /*fstat returns an off_t*/
 #elif _WIN32
 #include <inttypes.h>
 #include <windows.h>
-typedef uint64_t fsize_t;
+typedef uint64_t fsize_t; /*we use a fixed 64 bit int type on windows because GetFileSize returns 2 32-bit DWORD*/
 #endif
 
 /**
@@ -19,9 +19,9 @@ typedef uint64_t fsize_t;
  * logic and provides a unified interface. For concrete implementation see
  * files_*plaform*.c
  */
-typedef struct Dir Dir; //opaque type
+typedef struct Dir Dir; //opaque type, to provide encapsulation
 
-//portable error codes
+/**portable error codes*/
 #define ERR_NOFILE 1
 #define ERR_ACCESS 2
 #define ERR_NOTDIR 3
@@ -55,28 +55,44 @@ typedef int File;
 typedef HANDLE File;
 #endif
 
-#define READ 1
-#define WRITE 2
-#define CREATE 4
+/**Flags for open_file func*/
+#define READ 1   /*Opens the file for reading*/
+#define WRITE 2  /*Opens the file for writing*/
+#define CREATE 4 /*Creates the file if it doesn't exist*/
 
-/*Opens a file at path path. If the file is not found or an error occurs
- *err is nonzero and the return value of File is undefined. It accepts flags.*/
+/*
+ * Opens a file at path path. If the file is not found or an error occurs
+ * err is nonzero and the return value of File is undefined. It accepts flags.
+ * The opened file does not have any lock on it, the user should call lock_file
+ * for explicit locking.
+ * @arg path the poath of the file
+ * @arg mode how to open the file @see the flags above
+ * @arg err returns an error code upon failure, 0 otherwise. @see errcodes above
+ */
 File open_file(const char *path, int mode, int *err);
 int close_file(File file);
 
-/**It acquire an *exclusive* lock on file `f`. The file must be opened at least read/write*/
+/*
+ * It acquire an *exclusive* lock on file `f` in the specified range.
+ * The file *must* be opened at least read/write. One can lock bytes beyond
+ * the file's end, this is useful for synchronizing addition to the file.
+ * @return 0 on success non 0 on failure.
+ */
 int lock_file(File f, fsize_t off, fsize_t len);
 int unlock_file(File f, fsize_t off, fsize_t len);
 
-/*Returns the size of the file at path. the value returned by this funtion in fsize
-is guaranteed to be >= 0. The actual type of fsize_t is implementation defined.
-@return 0 on success and fsize is set to the file size. non 0 error code on failure*/
+/*
+ * Returns the size of the file at path. the value returned by this funtion in fsize
+ * is guaranteed to be >= 0. The actual type of fsize_t is implementation defined.
+ * @return 0 on success and fsize is set to the file size. non 0 error code on failure
+ */
 int get_file_size(const char *path, fsize_t *fsize);
+/**As above, but works with an already opened file*/
 int fget_file_size(File f, fsize_t *fsize);
 
-/*Deletes the file at path. Returns 0 on success, nonzero on failure*/
+/*Deletes the file at path. Returns 0 on success, non 0 error code on failure. @see error codes above*/
 int delete_file(const char *path);
-/*Changes the working directory of the process. Returns 0 on success, non 0 on failure*/
+/*Changes the working directory of the process. Returns 0 on success, non 0 error code on failure*/
 int change_dir(const char *path);
 /*Returns the pwd absolute path. The buffer is malloc'd so the caller
  *should call free on the buffer once he's done using it.*/
@@ -84,7 +100,7 @@ char* get_cwd();
 /*Returns the file's absolute path. The buffer is malloc'd so the caller
  *should call free on the buffer once he's done using it.*/
 char* get_abs(const char *path);
-/*Renames the file old_name to new_name*/
+/*Renames the file old_name to new_name*. Returns 0 on success non 0 on failure*/
 int rename_file(const char *old_name, const char *new_name);
 
 #endif

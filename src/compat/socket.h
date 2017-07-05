@@ -5,7 +5,8 @@
 #define PORT_MIN 1
 
 /*
- * Header only compatibility module for sockets.
+ * Header only compatibility module for sockets. The interface is so similar between
+ * the 2 impl. that a couple of macros should be enough to unify them.
  */
 
 //Unix sockets
