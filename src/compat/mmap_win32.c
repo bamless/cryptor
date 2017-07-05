@@ -6,11 +6,12 @@
 
 struct MemoryMap {
     HANDLE mapping;
+    DWORD prot;
 };
 
 MemoryMap *memory_map(File f, fsize_t length, int flags) {
     DWORD prot = 0;
-    if((flags & MMAP_READ) || ((flags & MMAP_READ) && (flags & MMAP_WRITE))) {
+    if(flags & MMAP_WRITE) {
         prot = PAGE_READWRITE;
     } else if(flags & MMAP_READ) {
         prot = PAGE_READONLY;
@@ -24,6 +25,7 @@ MemoryMap *memory_map(File f, fsize_t length, int flags) {
         return NULL;
     }
     mmap->mapping = mapping;
+    mmap->prot = prot;
 
     return mmap;
 }
@@ -35,7 +37,12 @@ int memory_unmap(MemoryMap *mmap) {
 }
 
 void *mmap_mapview(MemoryMap *mmap, fsize_t off, fsize_t length) {
-    return MapViewOfFile(mmap->mapping, FILE_MAP_WRITE, (DWORD) (off >> 32), (DWORD) off, length);
+    DWORD acc = 0;
+    if(mmap->prot == PAGE_READWRITE)
+        acc = FILE_MAP_WRITE;
+    else
+        acc = FILE_MAP_READ;
+    return MapViewOfFile(mmap->mapping, acc, (DWORD) (off >> 32), (DWORD) off, length);
 }
 
 int mmap_unmapview(void *view) {

@@ -88,11 +88,11 @@ void next_dir(Dir *dir, DirEntry *entry) {
 File open_file(const char *path, int mode, int *err) {
 	int flags = 0; *err = 0;
 	if((mode & READ) && (mode & WRITE)) {
-		flags |= O_RDWR;
+		flags = O_RDWR;
 	} else if(mode & READ) {
-		flags |= O_RDONLY;
+		flags = O_RDONLY;
 	} else if(mode & WRITE) {
-		flags |= O_WRONLY;
+		flags = O_WRONLY;
 	}
 
 	mode_t m = 0;
