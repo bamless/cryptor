@@ -98,7 +98,7 @@ File open_file(const char *path, int mode, int *err) {
 	mode_t m = 0;
 	if(mode & CREATE) {
 		flags |= O_CREAT;
-		m = 0744;
+		m = 0644;
 	}
 
 	int file = open(path, flags, m);
