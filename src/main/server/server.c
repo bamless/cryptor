@@ -193,6 +193,8 @@ static void read_cfg_file(Config *cfg) {
 			}
 			size_t len = strlen(cfg->pwd);
 			if(cfg->pwd[len - 1] == '\n') cfg->pwd[len - 1] = '\0'; //remove newline if present
+		} else {
+			elogf("Unknown conf file option `%s`\n", opt);
 		}
 	}
 	fclose(file);
