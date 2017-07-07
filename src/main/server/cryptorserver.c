@@ -70,7 +70,7 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
     int err;
     Dir *dir = open_dir(sbuf_get_backing_buf(path), &err);
     if(!dir || err) {
-        perr("Error send_list");
+        perr("Error send_list: open_dir failed");
         return;
     }
 
@@ -86,6 +86,7 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
             if(entry.type == NFILE) {
                 fsize_t fsize;
                 if(get_file_size(sbuf_get_backing_buf(path), &fsize)) {
+                    perr("Error send_list: get_file_size failed");
                     sbuf_truncate(path, orig_len);
                     continue;
                 }
@@ -98,8 +99,10 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
                 sbuf_appendstr(cmdline, sbuf_get_backing_buf(path)); //its path
                 sbuf_appendstr(cmdline, "\r\n");                     //carriage return and newline
 
-                if(send(s, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), MSG_NOSIGNAL) < 0)
+                if(send(s, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), MSG_NOSIGNAL) < 0) {
+                    perr_sock("Error send_list: send failed");
                     return;
+                }
             }
             if(entry.type == DIRECTORY && is_recursive) {
                 send_list(s, path, cmdline, is_recursive);
@@ -184,6 +187,8 @@ static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **pa
         sbuf_append(cmdline, buff, bytes_recv);
         if(sbuf_endswith(cmdline, "\r\n")) break; //\r\n signals end of encr/decr command lines
     }
+    if(bytes_recv < 0) perr_sock("Error");
+    
     sbuf_truncate(cmdline, sbuf_get_len(cmdline) - 2); //remove the \r\n
     size_t cmdline_len = sbuf_get_len(cmdline);
 

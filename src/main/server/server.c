@@ -31,7 +31,7 @@ static void signal_handler(int signal) {
 	dlogf("caught signal %d\n", signal);
 	if(signal == SIGHUP)
 		reload_requested = 1;
-	if(signal == SIGTERM || signal == SIGINT)
+	if(signal == SIGTERM)
 		shut_down = 1;
 }
 static void reload_cfg(Config *oldcfg, Socket *server_sock, ThreadPool **tp);
@@ -45,16 +45,6 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg);
 static void threadpool_handle_connection(void *incoming_conn);
 
 int main(int argc, char **argv) {
-#ifdef __unix
-	struct sigaction sa;
-	sa.sa_flags = 0; //we want SIGHUP to interrupt the accept syscall, so no SA_RESTART flag
-	sigemptyset(&sa.sa_mask);
-	sa.sa_handler = &signal_handler;
-	if(sigaction(SIGHUP, &sa, NULL) || sigaction(SIGTERM, &sa, NULL) || sigaction(SIGINT, &sa, NULL)) {
-		perr("Error signals");
-		exit(1);
-	}
-#endif
 	Config cfg;
 	init_config(&cfg);
 	parse_args_and_cfg(argc, argv, &cfg);
@@ -64,25 +54,30 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
+#ifdef __unix
+ 	daemonize();
+
+	struct sigaction sa;
+	sa.sa_flags = 0; //we want SIGHUP to interrupt the accept syscall, so no SA_RESTART flag
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = &signal_handler;
+	if(sigaction(SIGHUP, &sa, NULL) || sigaction(SIGTERM, &sa, NULL)) {
+		perr("Error signals");
+		exit(1);
+	}
+#endif
+
 	socket_startup();
 	Socket server_sock, client_sock;
 	server_sock = init_server_socket(htons(cfg.port));
-
-#ifdef __unix
- 	daemonize();
-#endif
-
 	ThreadPool *tp = threadpool_create(cfg.thread_count);
 
 	struct sockaddr_in client;
 	socklen_t client_len = sizeof(client);
 	while((client_sock = accept(server_sock, (struct sockaddr *) &client, &client_len))) {
 #ifdef __unix
-		if(reload_requested) {
-			dlog("reloading configs...");
-			reload_cfg(&cfg, &server_sock, &tp);
-		}
 		if(shut_down) break;
+		if(reload_requested) reload_cfg(&cfg, &server_sock, &tp);
 #endif
 		if(!is_socket_valid(client_sock)) continue;
 
@@ -278,6 +273,7 @@ static void daemonize() {
 		exit(1);
 	}
 
+	signal(SIGHUP, SIG_IGN); //ignore SIGHUP sent by sess. leader on exit
 	//fork a second time, so we are not session leaders anymore
 	pid = fork();
 	if(pid < 0) {
