@@ -161,6 +161,8 @@ static void read_cfg_file(Config *cfg) {
 
 	char line[1024];
 	while(fgets(line, 1024, file)) {
+		if(strcmp(line, "\n") == 0) continue;
+		
 		char *opt = strtok(line, " ");
 		char *optarg = strtok(NULL, " ");
 		if(optarg == NULL) {
@@ -192,6 +194,7 @@ static void read_cfg_file(Config *cfg) {
 			cfg->pwd[strlen(cfg->pwd) - 1] = '\0';
 		}
 	}
+	fclose(file);
 }
 
 static u_short parse_port(const char *portstr) {
