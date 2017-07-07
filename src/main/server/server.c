@@ -162,7 +162,7 @@ static void read_cfg_file(Config *cfg) {
 	char line[1024];
 	while(fgets(line, 1024, file)) {
 		if(strcmp(line, "\n") == 0) continue;
-		
+
 		char *opt = strtok(line, " ");
 		char *optarg = strtok(NULL, " ");
 		if(optarg == NULL) {
@@ -191,7 +191,8 @@ static void read_cfg_file(Config *cfg) {
 				strncat(cfg->pwd, " ", 1024);
 				strncat(cfg->pwd, remaining, 1024);
 			}
-			cfg->pwd[strlen(cfg->pwd) - 1] = '\0';
+			size_t len = strlen(cfg->pwd);
+			if(cfg->pwd[len - 1] == '\n') cfg->pwd[len - 1] = '\0'; //remove newline if present
 		}
 	}
 	fclose(file);
