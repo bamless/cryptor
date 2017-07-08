@@ -1,6 +1,10 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
+/*
+ * This header contains various constants used in the porocol implementation.
+ */
+
 #define LSTF "LSTF"
 #define LSTR "LSTR"
 #define ENCR "ENCR"
@@ -16,6 +20,5 @@
 #define RETERRTRANS "500"
 
 #define DEFAULT_PORT 8888 //the server default port
-
 
 #endif
