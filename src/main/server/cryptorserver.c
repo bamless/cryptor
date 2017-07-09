@@ -100,7 +100,6 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
                 sbuf_appendstr(cmdline, "\r\n");                     //carriage return and newline
 
                 if(send(s, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), MSG_NOSIGNAL) < 0) {
-                    perr_sock("Error send_list: send failed");
                     sbuf_truncate(path, orig_len);
                     break;
                 }
