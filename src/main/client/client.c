@@ -2,9 +2,9 @@
 #include "logging.h"
 #include "error.h"
 #include "stringbuf.h"
+#include "thread.h"
 #include "protocol.h"
 #include "cryptorclient.h"
-#include "thread.h"
 
 #include <stdlib.h>
 #include <getopt.h>
@@ -16,11 +16,11 @@
 #define SEEDS_FILE "cryptor_seeds"
 
 typedef struct ParsedArgs {
-	const char *cmd;			/*The command passed from arguments*/
-	unsigned long host_addr;	/*The server address*/
-	u_short host_port;			/*The server port*/
-	unsigned int seed;			/*The seed for the ENCR and DECR command*/
-	const char *path;			/*The path for the ENCR and DECR command*/
+	const char *cmd;         /*The command passed from arguments*/
+	unsigned long host_addr; /*The server address*/
+	u_short host_port;       /*The server port*/
+	unsigned int seed;       /*The seed for the ENCR and DECR command*/
+	const char *path;        /*The path for the ENCR and DECR command*/
 } ParsedArgs;
 
 typedef struct ThreadArgs {

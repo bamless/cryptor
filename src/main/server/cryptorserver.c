@@ -243,7 +243,10 @@ static char* get_out_name(const char *name, int is_decrypt) {
     return out;
 }
 
+#Mingw-w64 does not seem to have rand_r implemented. The following implementation is 
+#taken from the Mingw source code on sourceforge
 #ifdef _WIN32
+/**Thread safe random number generator.*/
 static int rand_r(unsigned int *seed) {
         long k;
         long s = (long)(*seed);
