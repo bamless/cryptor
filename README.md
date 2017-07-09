@@ -4,7 +4,26 @@ This is a ransomware-like client server application developed as the final proje
 
 ### How to use ###
 
-coming soon
+#### server #####
+run the *cryptord* binary from terminal. The program accepts various arguments:
+ * *-n* : the max number of thread the server will create to handle connections. (optional, default 20)
+ * *-p* : the port over which the server will be listening for incoming connections. (optional, default 8888)
+ * *-c* : the path to the folder in which the server will be running (its PWD). (optional, but only if the directory is specified in the conf. file)
+ * *-f* : the path to a config file. (optional)
+
+ Every line in the config file should have the form: *opt_name* *value*. \
+ The options available in the config files are: **directory**, **port** and **threads** and they correspond respectively to: *-c*, *-p* and *-n*. \
+ If an option is specified in both the config file and as an argument, the option in the config file will be used. \
+ On Linux the config file can be reloaded while the server is running by sending a SIGHUP to the process.
+
+#### client #####
+run the *cryptor* binary from terminal.
+
+The program accepts one of the following options, which correspond protocol commands:
+ * *-l ip:port* will send a **LSTF** command to the server at *ip* over port *port*.
+ * *-R ip:port* will send a **LSTR** command to the server at *ip* over port *port*.
+ * *-e seed path ip:port* will send an **ENCR** command to the server at *ip* over port *port* to encrypt the file at *path* using the seed *seed* to generate the key.
+ * *-d seed path ip:port* similar to the previous one, but decrypts the file. Naturally the *seed* must be the same used for encryption.
 
 ### How do I get set up? ###
 
