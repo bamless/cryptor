@@ -133,7 +133,7 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
     }
 
     int err;
-    File file = open_file(path, READ | WRITE, &err); //WRITE is needed for acquaring an exclusive lock
+    File file = open_file(path, READ | WRITE, &err); //WRITE is needed for acquiring an exclusive lock
     if(err) {
         char *errn = (err == ERR_NOFILE) ? RETERR : RETERRTRANS;
         send(client, errn, 3, MSG_NOSIGNAL);
@@ -260,39 +260,3 @@ static int rand_r(unsigned int *seed) {
         return (int)(s & RAND_MAX);
 }
 #endif
-
-Socket init_server_socket(u_short port) {
-	struct sockaddr_in server;
-
-	memset(&server, 0, sizeof(server));
-	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = htonl(INADDR_ANY);
-	server.sin_port = port;
-
-	Socket server_sock = socket(AF_INET, SOCK_STREAM, 0);
-	if(!is_socket_valid(server_sock)) {
-		perr_sock("Error creating socket");
-		socket_cleanup();
-		exit(1);
-	}
-
-#ifdef __unix
-	int optval = 1;
-	if(setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, (void *) &optval, sizeof(optval))) {
-		perr_sock("Error socket");
-		exit(1);
-	}
-#endif
-
-	if(bind(server_sock, (struct sockaddr *) &server, sizeof(server))) {
-		perr_sock("Error bind");
-		socket_cleanup();
-		exit(1);
-	}
-	if(listen(server_sock, SOMAXCONN)) {
-		perr_sock("Error bind");
-		socket_cleanup();
-		exit(1);
-	}
-    return server_sock;
-}

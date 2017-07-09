@@ -8,12 +8,7 @@
  * The actual implementation of the protocol
  */
 
-/*
- * Connects the socket to the server at 'adrr' over port 'port'
- * @arg addr the ip address of the host you want to connect to. This address should be already in network bytes order
- * @arg poer the port over you want to connect. This should be already in network bytes order
- */
-Socket init_connection(unsigned long addr, u_short port);
+
 /*
  * Sends a command (@see protocol.h) to the server represented by sock.
  * @arg server a socket connect()ed to a server running the protocol.

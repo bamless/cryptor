@@ -3,6 +3,7 @@
 #include "error.h"
 #include "threadpool.h"
 #include "files.h"
+#include "socket_utils.h"
 #include "protocol.h"
 #include "cryptorserver.h" /*cryptor_handle_connection(Socket socket)*/
 
@@ -34,6 +35,7 @@ static void signal_handler(int signal) {
 	if(signal == SIGTERM)
 		shut_down = 1;
 }
+
 static void reload_cfg(Config *oldcfg, Socket *server_sock, ThreadPool **tp);
 static void daemonize();
 #endif

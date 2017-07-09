@@ -3,6 +3,7 @@
 #include "error.h"
 #include "stringbuf.h"
 #include "thread.h"
+#include "socket_utils.h"
 #include "protocol.h"
 #include "cryptorclient.h"
 
@@ -30,7 +31,7 @@ typedef struct ThreadArgs {
 
 static void usage(char *exec_name);
 static void parse_args(int argc, char **argv, ParsedArgs *args);
-static void strtoipandport(char *hostandport, unsigned long *ip, u_short *port);
+static int strtoipandport(char *hostandport, unsigned long *ip, u_short *port);
 static void save_seed(unsigned int seed, const char *path);
 static char* str_retcode(int retcode);
 static void send_thread_command(void *, void **);
@@ -40,7 +41,7 @@ int main(int argc, char **argv) {
 	parse_args(argc, argv, &args);
 
 	socket_startup();
-	Socket sock = init_connection(args.host_addr, args.host_port);
+	Socket sock = connect_socket(args.host_addr, args.host_port);
 
 	int ret_code = 0;
 	//encryption and decryption command should run in another thread as per proj. spec.
@@ -88,8 +89,9 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 	if(argc < 3) usage(argv[0]);
 
 	//get the ip addr and the port
-	strtoipandport(argv[argc - 1], &args->host_addr, &args->host_port);
-	if(args->host_addr == INADDR_NONE) usage(argv[0]);
+	if(strtoipandport(argv[argc - 1], &args->host_addr, &args->host_port)) {
+		usage(argv[0]);
+	}
 	if(args->host_port == 0) args->host_port = htons(DEFAULT_PORT);
 
 	//get the options
@@ -148,26 +150,28 @@ static char* str_retcode(int retcode) {
 
 /*
  * Parses a string of the form ipaddr:port and returns the ip addr in the "ip" arg
- * and the port in the "port" arg.
- * The "ip" arg will be < 0 if the function fails to parse the ip address, while
- * the "port" arg will be 0 if the function fails to parse the port.
+ * and the port in the "port" arg. I no port is specified, then the "port" arg is set to 0
+ * @return 0 on success, non 0 on failure and ip and port content is undefined
  */
-static void strtoipandport(char *hostandport, unsigned long *ip, u_short *port) {
+static int strtoipandport(char *hostandport, unsigned long *ip, u_short *port) {
 	char *hoststr = strtok(hostandport, ":");
-	*ip = inet_addr(hoststr);
+	if(inet_pton(AF_INET, hoststr, ip) != 1) {
+		return -1;
+	}
 
 	char *portstr = strtok(NULL, ":");
 	if(portstr == NULL) {
 		*port = 0;
-		return;
+		return 0;
 	}
 
 	char *err;
 	long p = strtol(portstr, &err, 10);
 	if(*err != '\0' || p < PORT_MIN || p > PORT_MAX) {
-		p = 0;
+		return -1;
 	}
 	*port = (u_short) htons((uint16_t) p);
+	return 0;
 }
 
 static void save_seed(unsigned int seed, const char *path) {

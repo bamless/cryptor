@@ -4,12 +4,7 @@
 #include "socket.h"
 
 /*
- * Initializes a socket listening on port 'port'
- * @arg port the port on which the socket will be listening
- */
-Socket init_server_socket(u_short port);
-/*
- * Handles the conction with a client, it receives commands and respond to them
+ * Handles the connection with a client, it receives commands and respond to them
  * according to the protocol.
  * @arg client A socket that has been accept()ed and that is connected to a protocol client.
  */

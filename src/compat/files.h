@@ -65,7 +65,7 @@ typedef HANDLE File;
  * err is nonzero and the return value of File is undefined. It accepts flags.
  * The opened file does not have any lock on it, the user should call lock_file
  * for explicit locking.
- * @arg path the poath of the file
+ * @arg path the path of the file
  * @arg mode how to open the file @see the flags above
  * @arg err returns an error code upon failure, 0 otherwise. @see errcodes above
  */

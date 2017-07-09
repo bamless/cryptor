@@ -16,7 +16,7 @@ void sbuf_destroy(StringBuffer *sbuf);
  *free the returned array when done using it.*/
 char* sbuf_detach_and_destroy(StringBuffer *sbuf);
 
-/*Empty the StringBuffer*/
+/*Empties the StringBuffer*/
 void sbuf_clear(StringBuffer *sbuf);
 /*Returns the backing array for use with other functions*/
 char* sbuf_get_backing_buf(StringBuffer *sbuf);

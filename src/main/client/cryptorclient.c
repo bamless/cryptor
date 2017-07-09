@@ -85,26 +85,6 @@ void cryptor_print_more(Socket server) {
     if(bytes_recv < 0) perr_sock("Error");
 }
 
-Socket init_connection(unsigned long addr, u_short port) {
-    struct sockaddr_in server;
-
-    memset(&server, 0, sizeof(server));
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = addr;
-    server.sin_port = port;
-
-    Socket sock = socket(AF_INET, SOCK_STREAM, 0);
-    if(!is_socket_valid(sock)) {
-        perr_sock("Error: creating socket");
-        close_and_exit(sock);
-    }
-    if(connect(sock, (struct sockaddr *) &server, sizeof(server))) {
-        perr_sock("Error bind");
-        close_and_exit(sock);
-    }
-    return sock;
-}
-
 static int read_response(Socket sock) {
     //read response code
     char resp[4];
