@@ -111,7 +111,7 @@ int threadpool_add_task(ThreadPool *tp, void (*task_func)(void *), void *args) {
     tp->tasks_tail = task;
     tp->queue_size++;
 
-    thread_cond_signal_all(&tp->tasks_cond);
+    thread_cond_signal(&tp->tasks_cond);
     thread_unlock_mutex(&tp->tp_lock);
     return 0;
 }

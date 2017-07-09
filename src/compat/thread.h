@@ -56,5 +56,6 @@ void thread_init_cond(CondVar *cond);
 void thread_destroy_cond(CondVar *cond);
 void thread_cond_wait(CondVar *cond, Mutex *mutex);
 void thread_cond_signal_all(CondVar *cond);
+void thread_cond_signal(CondVar *cond);
 
 #endif

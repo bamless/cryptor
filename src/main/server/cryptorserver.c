@@ -101,7 +101,8 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
 
                 if(send(s, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), MSG_NOSIGNAL) < 0) {
                     perr_sock("Error send_list: send failed");
-                    return;
+                    sbuf_truncate(path, orig_len);
+                    break;
                 }
             }
             if(entry.type == DIRECTORY && is_recursive) {
@@ -188,7 +189,7 @@ static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **pa
         if(sbuf_endswith(cmdline, "\r\n")) break; //\r\n signals end of encr/decr command lines
     }
     if(bytes_recv < 0) perr_sock("Error");
-    
+
     sbuf_truncate(cmdline, sbuf_get_len(cmdline) - 2); //remove the \r\n
     size_t cmdline_len = sbuf_get_len(cmdline);
 
@@ -243,8 +244,8 @@ static char* get_out_name(const char *name, int is_decrypt) {
     return out;
 }
 
-#Mingw-w64 does not seem to have rand_r implemented. The following implementation is 
-#taken from the Mingw source code on sourceforge
+//Mingw-w64 does not seem to have rand_r implemented. The following implementation is
+//taken from the Mingw source code on sourceforge
 #ifdef _WIN32
 /**Thread safe random number generator.*/
 static int rand_r(unsigned int *seed) {

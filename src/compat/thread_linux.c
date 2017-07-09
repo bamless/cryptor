@@ -98,6 +98,11 @@ void thread_cond_signal_all(CondVar *cond) {
     error_check("Error: thread_cond_signal_all", err);
 }
 
+void thread_cond_signal(CondVar *cond) {
+    int err = pthread_cond_signal(cond);
+    error_check("Error: thread_cond_signal", err);
+}
+
 static void error_check(const char *msg, int err) {
     if(err) {
         char buff[256];
