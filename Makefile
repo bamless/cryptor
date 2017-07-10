@@ -64,6 +64,8 @@ endif
 
 ifeq ($(PLATFORM),win32)
 	LIBS += -lws2_32 #MinGW-w64 Winsock library
+	#set windows API level to Vista. This is needed in order to use certain functions (for example the synchapi.h or the inet_pton)
+	CFLAGS += -D_WIN32_WINNT=0x0600
 endif
 
 # Recursive wildcard, used to get all c files in a directory recursively

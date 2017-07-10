@@ -1,5 +1,3 @@
-//Windows Vista code (I don't know why but even if compiling on win10 this is set to an old O.S value)
-#define _WIN32_WINNT 0x0600
 #include "thread.h"
 #include "logging.h"
 #include "error.h"

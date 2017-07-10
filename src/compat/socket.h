@@ -26,6 +26,7 @@ typedef int Socket;
 //Windows sockets
 #elif _WIN32
 #include <winsock2.h>
+#include <ws2tcpip.h>
 
 typedef SOCKET Socket;
 typedef int socklen_t; // needed in roder to use accept in a portable way (avoids compiler warnings)
