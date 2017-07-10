@@ -34,7 +34,7 @@ static void parse_args(int argc, char **argv, ParsedArgs *args);
 static int strtoipandport(char *hostandport, unsigned long *ip, u_short *port);
 static void save_seed(unsigned int seed, const char *path);
 static char* str_retcode(int retcode);
-static void send_thread_command(void *, void **);
+static void send_thread_command(void *, void *);
 
 int main(int argc, char **argv) {
 	ParsedArgs args;
@@ -46,18 +46,13 @@ int main(int argc, char **argv) {
 	int ret_code = 0;
 	//encryption and decryption command should run in another thread as per proj. spec.
 	if(strcmp(args.cmd, ENCR) == 0 || strcmp(args.cmd, DECR) == 0) {
-		int *ret;
-
 		Thread t;
-		ThreadArgs *ta = malloc(sizeof(ThreadArgs));
-		ta->args = args;
-		ta->s = sock;
+		ThreadArgs ta = {args, sock};
 
-		thread_create(&t, &send_thread_command, ta, (void **) &ret);
+		//it is OK to pass stack variables to the thread in this situation because
+		//we are going to join right after, mantaining such variables valid.
+		thread_create(&t, &send_thread_command, &ta, &ret_code);
 		thread_join(&t);
-		ret_code = *ret;
-
-		free(ret);
 	} else {
 		ret_code = cryptor_send_command(sock, args.cmd, args.seed, args.path);
 	}
@@ -75,14 +70,10 @@ int main(int argc, char **argv) {
 	socket_cleanup();
 }
 
-static void send_thread_command(void *args, void **retval) {
-	int **ret_code = (int **) retval;
-	*ret_code = malloc(sizeof(int));
-	ThreadArgs *t_args = args;
-
-	**ret_code = cryptor_send_command(t_args->s, t_args->args.cmd, t_args->args.seed, t_args->args.path);
-
-	free(args);
+static void send_thread_command(void *args, void *retval) {
+	ThreadArgs *t_args = (ThreadArgs *) args;
+	int *ret_code = (int *) retval;
+	*ret_code = cryptor_send_command(t_args->s, t_args->args.cmd, t_args->args.seed, t_args->args.path);
 }
 
 static void parse_args(int argc, char **argv, ParsedArgs *args) {

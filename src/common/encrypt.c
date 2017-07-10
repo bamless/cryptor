@@ -27,7 +27,10 @@ int encrypt(File plainfd, const char *out_name, int *key, int key_len) {
     int err = 0;
     File cipherfd = open_file(out_name, READ | WRITE | CREATE, &err);
     if(err) return -1;
-    if(lock_file(cipherfd, 0, size)) return -1;
+    if(lock_file(cipherfd, 0, size)) {
+        close_file(cipherfd);
+        return -1;
+    }
 
     MemoryMap *plain = memory_map(plainfd, size, MMAP_READ);
     if(!plain) return -1;

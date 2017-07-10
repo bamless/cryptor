@@ -25,7 +25,7 @@ struct ThreadPool {
 };
 
 static void init_threads(ThreadPool *);
-static void worker_thread(void *, void **);
+static void worker_thread(void *, void *);
 
 ThreadPool* threadpool_create(int thread_count) {
     ThreadPool *tp = malloc(sizeof(ThreadPool));
@@ -116,7 +116,7 @@ int threadpool_add_task(ThreadPool *tp, void (*task_func)(void *), void *args) {
     return 0;
 }
 
-static void worker_thread(void *threadpool, void **retval) {
+static void worker_thread(void *threadpool, void *retval) {
     ThreadPool *tp = threadpool;
 
     for(;;) {
