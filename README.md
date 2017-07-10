@@ -27,7 +27,7 @@ The program accepts one of the following options, which correspond protocol comm
 
  * *-l ip:port* will send a **LSTF** command to the server at **ip** over port **port**.
  * *-R ip:port* will send a **LSTR** command to the server at **ip** over port **port**.
- * *-e seed path ip:port* will send an **ENCR** command to the server at **ip** over port **port** to encrypt the file at **path** using the seed *seed* to generate the key.
+ * *-e seed path ip:port* will send an **ENCR** command to the server at **ip** over port **port** to encrypt the file at **path** using the seed **seed** to generate the key.
  * *-d seed path ip:port* similar to the previous one, but decrypts the file. Naturally the seed must be the same used for encryption.
 
 ### How do I get set up? ###
