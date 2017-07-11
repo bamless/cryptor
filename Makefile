@@ -116,7 +116,7 @@ createdirs:
 server: createdirs
 	@echo "Beginning build..."
 	@echo ""
-	@make _server --no-print-directory
+	@$(MAKE) _server --no-print-directory
 	@echo ""
 	@echo "Build successful"
 
@@ -124,7 +124,7 @@ server: createdirs
 client: createdirs
 	@echo "Beginning build..."
 	@echo ""
-	@make _client --no-print-directory
+	@$(MAKE) _client --no-print-directory
 	@echo ""
 	@echo "Build successful"
 
@@ -133,7 +133,7 @@ client: createdirs
 test: createdirs
 	@echo "Beginning build..."
 	@echo ""
-	@make _test --no-print-directory
+	@$(MAKE) _test --no-print-directory
 	@echo ""
 	@echo "Build successful"
 
