@@ -23,7 +23,7 @@ run the *cryptord* binary from terminal. The program accepts various arguments:
 #### client #####
 run the *cryptor* binary from terminal.
 
-The program accepts one of the following options, which correspond protocol commands:
+The program accepts one of the following options, which correspond to protocol commands:
 
  * *-l ip:port* will send a **LSTF** (list directory) command to the server at **ip** over port **port**.
  * *-R ip:port* will send a **LSTR** (list directory recursive) command to the server at **ip** over port **port**.
