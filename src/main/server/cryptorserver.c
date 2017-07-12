@@ -77,38 +77,43 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
     DirEntry entry;
     while(has_next(dir)) {
         next_dir(dir, &entry);
-        if(strcmp(entry.name, ".") != 0 && strcmp(entry.name, "..") != 0) {
-            int orig_len = sbuf_get_len(path); //save the prev length of the path
-            //append the entry name to obtain the full path
-            sbuf_appendstr(path, "/");
-            sbuf_appendstr(path, entry.name);
+        if(strcmp(entry.name, ".") == 0 || strcmp(entry.name, "..") == 0) continue;
 
-            if(entry.type == NFILE) {
-                fsize_t fsize;
-                if(get_file_size(sbuf_get_backing_buf(path), &fsize)) {
-                    perr("Error send_list: get_file_size failed");
-                    sbuf_truncate(path, orig_len);
-                    continue;
-                }
-                sbuf_clear(cmdline);
-                char fsizestr[21]; //20 max size of 64 bit integer + 1 for NUL
-                //we can safely cast to uintmax_t because get_file_size guarantees a result >= 0
-                snprintf(fsizestr, sizeof(fsizestr), "%"PRIu64" ", (uintmax_t) fsize);
+        int orig_len = sbuf_get_len(path); //save the prev length of the path
+        //append the entry name to obtain the full path
+        sbuf_appendstr(path, "/");
+        sbuf_appendstr(path, entry.name);
 
-                sbuf_appendstr(cmdline, fsizestr);                   //the size of the file
-                sbuf_appendstr(cmdline, sbuf_get_backing_buf(path)); //its path
-                sbuf_appendstr(cmdline, "\r\n");                     //carriage return and newline
-
-                if(send(s, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), MSG_NOSIGNAL) < 0) {
-                    sbuf_truncate(path, orig_len);
-                    break;
-                }
+        if(entry.type == NFILE) {
+            fsize_t fsize;
+            if(get_file_size(sbuf_get_backing_buf(path), &fsize)) {
+                perr("Error send_list: get_file_size failed");
+                sbuf_truncate(path, orig_len);
+                continue;
             }
-            if(entry.type == DIRECTORY && is_recursive) {
-                send_list(s, path, cmdline, is_recursive);
+
+            sbuf_clear(cmdline); //empties the sbuf
+
+            //we can safely cast to uintmax_t because get_file_size guarantees a result >= 0
+            char fsizestr[22]; //20 max size of 64 bit integer + 1 for NUL + 1 for space
+            sprintf(fsizestr, "%"PRIu64" ", (uintmax_t) fsize);
+
+            //append the cmdline to the sbuf
+            sbuf_appendstr(cmdline, fsizestr);                   //the size of the file
+            sbuf_appendstr(cmdline, sbuf_get_backing_buf(path)); //its path
+            sbuf_appendstr(cmdline, "\r\n");                     //carriage return and newline
+
+            if(send(s, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), MSG_NOSIGNAL) < 0) {
+                sbuf_truncate(path, orig_len);
+                break;
             }
-            sbuf_truncate(path, orig_len); //remove the entry name from the path
         }
+        //if directory and LSTR, secursively explore
+        if(entry.type == DIRECTORY && is_recursive) {
+            send_list(s, path, cmdline, is_recursive);
+        }
+
+        sbuf_truncate(path, orig_len); //remove the entry name from the path
     }
     close_dir(dir);
 }
