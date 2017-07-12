@@ -121,12 +121,7 @@ static int strendswith(const char *str, const char *substr);
 static void handle_encrytion_commands(Socket client, int is_decrypt) {
     char *path = NULL;
     unsigned int seed;
-    if(parse_encryption_cmdline(client, &seed, &path)) {
-        send(client, RETERR, 3, MSG_NOSIGNAL);
-        if(path) free(path);
-        return;
-    }
-    if(is_decrypt && !strendswith(path, "_enc")) {
+    if(parse_encryption_cmdline(client, &seed, &path) || (is_decrypt && !strendswith(path, "_enc"))) {
         send(client, RETERR, 3, MSG_NOSIGNAL);
         if(path) free(path);
         return;
@@ -142,14 +137,7 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
     }
 
     fsize_t s;
-    if(fget_file_size(file, &s)) {
-        send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
-        close_file(file);
-        free(path);
-        return;
-    }
-
-    if(lock_file(file, 0, s)) {
+    if(fget_file_size(file, &s) || lock_file(file, 0, s)) {
         send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
         close_file(file);
         free(path);
