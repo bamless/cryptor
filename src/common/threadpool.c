@@ -54,7 +54,7 @@ static void init_threads(ThreadPool *tp) {
     }
 }
 
-void threadpool_destroy(ThreadPool *tp, enum shutdown_type type) {
+void threadpool_destroy(ThreadPool *tp, enum ShutDownType type) {
     //set the shutting flag for the threads (we need to synchronize)
     thread_lock_mutex(&tp->tp_lock);
     //we are already shutting

@@ -29,12 +29,12 @@ typedef struct Dir Dir; //opaque type, to provide encapsulation
 #define ERR_GENERIC 5
 
 /*Enum for the different file types a directory can hold*/
-typedef enum FileType {
+enum FileType {
   NFILE, DIRECTORY, UNKNW
-} FileType;
+};
 /*Struct holding a directory entry info*/
 typedef struct DirEntry {
-  FileType type;
+  enum FileType type;
   char name[256];
 } DirEntry;
 

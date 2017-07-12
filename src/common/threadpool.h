@@ -3,7 +3,7 @@
 
 typedef struct ThreadPool ThreadPool; //opaque, to provide encapsulation
 
-enum shutdown_type {
+enum ShutDownType {
     /*The worker threads empty the queue before shutting*/
     SOFT_SHUTDOWN = 1,
     /*The worker threads shut down as soon as they can*/
@@ -24,7 +24,7 @@ ThreadPool* threadpool_create(int thread_count);
  * and then frees all the resource associated with the threadpool.
  * @arg type The type of shutdown the thread pool will perform. @see shutdown_type
  */
-void threadpool_destroy(ThreadPool *tp, enum shutdown_type type);
+void threadpool_destroy(ThreadPool *tp, enum ShutDownType type);
 /*
  * Adds a new task to the thread pool
  * @arg task_func The pointer to the function that will be executed
