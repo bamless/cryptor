@@ -26,20 +26,16 @@ typedef struct Config {
 /*Linux specific functions for reloading the confs on SIGHUP and for daemonizing*/
 #ifdef __unix
 #include <signal.h>
-static int reload_requested = 0; //flags that indicates that the user wants to reload the config file
+//flags for requesting a config file reload
+static int reload_requested = 0;
 static int shut_down = 0;
-static void signal_handler(int signal) {
-	dlogf("caught signal %d\n", signal);
-	if(signal == SIGHUP)
-		reload_requested = 1;
-	if(signal == SIGTERM)
-		shut_down = 1;
-}
 
+static void signal_handler(int signal);
 static void reload_cfg(Config *oldcfg, Socket *server_sock, ThreadPool **tp);
 static void daemonize();
 #endif
 
+//prototypes
 static void usage(const char *exec_name);
 static void init_config(Config *cfg);
 static void free_config(Config *cfg);
@@ -164,7 +160,6 @@ static void read_cfg_file(Config *cfg) {
 	char line[1024];
 	while(fgets(line, 1024, file)) {
 		if(strcmp(line, "\n") == 0) continue;
-
 		char *opt = strtok(line, " ");
 		char *optarg = strtok(NULL, " ");
 		if(optarg == NULL) {
@@ -231,6 +226,14 @@ static void usage(const char *exec_name) {
 /* Linux specific stuff */
 
 #ifdef __unix
+static void signal_handler(int signal) {
+	dlogf("caught signal %d\n", signal);
+	if(signal == SIGHUP)
+		reload_requested = 1;
+	if(signal == SIGTERM)
+		shut_down = 1;
+}
+
 static void reload_cfg(Config *oldcfg, Socket *server_sock, ThreadPool **tp) {
 	//the program doesn't have a conf file
 	if(!oldcfg->conf_file) return;
