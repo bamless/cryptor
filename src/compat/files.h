@@ -30,12 +30,12 @@ typedef struct Dir Dir; //opaque type, to provide encapsulation
 
 /*Enum for the different file types a directory can hold*/
 enum FileType {
-  NFILE, DIRECTORY, UNKNW
+    NFILE, DIRECTORY, UNKNW
 };
 /*Struct holding a directory entry info*/
 typedef struct DirEntry {
-  enum FileType type;
-  char name[256];
+    enum FileType type;
+    char name[256];
 } DirEntry;
 
 /*Opens a directory at path "path. If it fails returns NULL and err is set to the appropriate error code"*/
