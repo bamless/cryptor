@@ -33,10 +33,8 @@ int encrypt(File plainfd, const char *out_name, int *key, int key_len) {
     }
 
     MemoryMap *plain = memory_map(plainfd, size, MMAP_READ);
-    if(!plain) return -1;
     MemoryMap *cipher = memory_map(cipherfd, size, MMAP_READ | MMAP_WRITE);
-    if(!cipher) return -1;
-
+    if(!cipher || !plain) return -1;
 
     fsize_t num_chunks = ceil(size/((float) PAR_BLCK));
     #pragma omp parallel for
@@ -45,9 +43,8 @@ int encrypt(File plainfd, const char *out_name, int *key, int key_len) {
         fsize_t len = (from + PAR_BLCK) > size ? size - from : PAR_BLCK;
 
         int *plain_chunk = mmap_mapview(plain, from, len);
-        if(plain_chunk == NULL) perr("Error encrypt");
         int *cipher_chunk = mmap_mapview(cipher, from, len);
-        if(cipher_chunk == NULL) perr("Error encrypt");
+        if(!cipher_chunk || !plain_chunk) perr("Error encrypt");
 
         fsize_t len32 = ceil(len/(float) INT_LEN);
         for(int i = 0; i < len32; i++) {
