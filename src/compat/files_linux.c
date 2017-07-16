@@ -174,7 +174,7 @@ int change_dir(const char *path) {
 }
 
 char* get_cwd() {
-	int size = 1024;
+	int size = 64;
 	char *pwd = malloc(size);
 	while(!getcwd(pwd, size) && errno == ERANGE) {
 		size *= 2;
