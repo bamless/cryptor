@@ -1,9 +1,9 @@
 #include "socket.h"
+#include "socket_utils.h"
 #include "logging.h"
 #include "error.h"
 #include "threadpool.h"
 #include "files.h"
-#include "socket_utils.h"
 #include "protocol.h"
 #include "stringbuf.h"
 #include "cryptorserver.h" /*cryptor_handle_connection(Socket socket)*/
@@ -165,10 +165,8 @@ static void read_cfg_file(Config *cfg) {
 	}
 	logsf("Reading config file %s\n", cfg->conf_file);
 
-	//we use getline in order to avoid a fixed length for a line of the conf file
-	char *line = NULL;
-	size_t n = 0;
-	while(getline(&line, &n, file) != -1) {
+	char line[1024];
+	while(fgets(line, sizeof(line), file)) {
 		if(strcmp(line, "\n") == 0) continue;
 
 		char *conf = strtok(line, " ");
@@ -210,7 +208,6 @@ static void read_cfg_file(Config *cfg) {
 			elogf("Unknown conf file option `%s`\n", conf);
 		}
 	}
-	free(line);
 	fclose(file);
 }
 
