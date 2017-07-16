@@ -81,8 +81,8 @@ void next_dir(Dir *dir, DirEntry *entry) {
 			entry->type = UNKNW;
 			break;
 	}
-	strncpy(entry->name, unix_dirent->d_name, 255);
-	entry->name[255] = '\0'; //null terminate just in case strncpy truncates
+	strncpy(entry->name, unix_dirent->d_name, sizeof(entry->name));
+	entry->name[sizeof(entry->name) - 1] = '\0'; //null terminate just in case strncpy truncates
 }
 
 File open_file(const char *path, int mode, int *err) {

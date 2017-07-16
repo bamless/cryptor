@@ -45,7 +45,6 @@ void cryptor_handle_connection(Socket client) {
     socket_close(client);
 }
 
-
 static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int is_recursive);
 
 static void handle_list_commands(Socket client, int is_recursive) {
@@ -128,7 +127,7 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
     unsigned int seed;
     if(parse_encryption_cmdline(client, &seed, &path) || (is_decrypt && !strendswith(path, "_enc"))) {
         send(client, RETERR, 3, MSG_NOSIGNAL);
-        if(path) free(path);
+        free(path);
         return;
     }
 

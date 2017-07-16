@@ -5,6 +5,7 @@
 #include "files.h"
 #include "socket_utils.h"
 #include "protocol.h"
+#include "stringbuf.h"
 #include "cryptorserver.h" /*cryptor_handle_connection(Socket socket)*/
 
 #include <stdlib.h>
@@ -26,7 +27,8 @@ typedef struct Config {
 /*Linux specific functions for reloading the confs on SIGHUP and for daemonizing*/
 #ifdef __unix
 #include <signal.h>
-//flags for requesting a config file reload
+
+//flags for requesting a config file reload and for shutting the server
 static int reload_requested = 0;
 static int shut_down = 0;
 
@@ -104,6 +106,11 @@ static void init_config(Config *cfg) {
 	cfg->pwd = NULL; //this is a mandatory arg, so we don't need a default value
 }
 
+static void free_config(Config *cfg) {
+	free(cfg->conf_file);
+	free(cfg->pwd);
+}
+
 static void read_cfg_file(Config *cfg);
 static u_short parse_port(const char *portstr);
 static int parse_numthreads(const char *numthreads_str);
@@ -158,43 +165,52 @@ static void read_cfg_file(Config *cfg) {
 	}
 	logsf("Reading config file %s\n", cfg->conf_file);
 
-	char line[1024];
-	while(fgets(line, 1024, file)) {
+	//we use getline in order to avoid a fixed length for a line of the conf file
+	char *line = NULL;
+	size_t n = 0;
+	while(getline(&line, &n, file) != -1) {
 		if(strcmp(line, "\n") == 0) continue;
-		char *opt = strtok(line, " ");
-		char *optarg = strtok(NULL, " ");
-		if(optarg == NULL) {
-			elogf("Argument missing for option `%s`\n", opt);
-			return;
+
+		char *conf = strtok(line, " ");
+		char *confarg = strtok(NULL, " ");
+		if(confarg == NULL) {
+			elogf("Argument missing for conf file option `%s`\n", conf);
+			break;
 		}
 
-		if(strcmp(opt, "threads") == 0) {
-			cfg->thread_count = parse_numthreads(optarg);
+		if(strcmp(conf, "threads") == 0) {
+			cfg->thread_count = parse_numthreads(confarg);
 			if(cfg->thread_count == 0) {
 				elog("Option `threads` of conf file is malformed.");
-				return;
+				break;
 			}
-		} else if(strcmp(opt, "port") == 0) {
-			cfg->port = parse_port(optarg);
+		} else if(strcmp(conf, "port") == 0) {
+			cfg->port = parse_port(confarg);
 			if(cfg->port == 0) {
 				elog("Option `port` of conf file is malformed.");
-				return;
+				break;
 			}
-		} else if(strcmp(opt, "directory") == 0) {
-			if(cfg->pwd) free(cfg->pwd);
-			cfg->pwd = malloc(1024);
-			strncpy(cfg->pwd, optarg, 1024);
+		} else if(strcmp(conf, "directory") == 0) {
+			free(cfg->pwd);
+
+			StringBuffer *new_pwd = sbuf_create();
+			sbuf_appendstr(new_pwd, confarg);
+
 			char *remaining;
 			while((remaining = strtok(NULL, " "))) {
-				strncat(cfg->pwd, " ", 1024);
-				strncat(cfg->pwd, remaining, 1024);
+				sbuf_appendstr(new_pwd, " ");
+				sbuf_appendstr(new_pwd, remaining);
 			}
-			size_t len = strlen(cfg->pwd);
-			if(cfg->pwd[len - 1] == '\n') cfg->pwd[len - 1] = '\0'; //remove newline if present
+			//remove newline if present
+			if(sbuf_endswith(new_pwd, "\n"))
+				sbuf_truncate(new_pwd, sbuf_get_len(new_pwd) - 1);
+
+			cfg->pwd = sbuf_detach_and_destroy(new_pwd);
 		} else {
-			elogf("Unknown conf file option `%s`\n", opt);
+			elogf("Unknown conf file option `%s`\n", conf);
 		}
 	}
+	free(line);
 	fclose(file);
 }
 
@@ -212,11 +228,6 @@ static int parse_numthreads(const char *numthreads_str) {
 	if((*err != '\0' && *err != '\n') || tc < 1 || tc > INT_MAX)
 		return 0;
 	return (int) tc;
-}
-
-static void free_config(Config *cfg) {
-	if(cfg->conf_file) free(cfg->conf_file);
-	if(cfg->pwd) free(cfg->pwd);
 }
 
 static void usage(const char *exec_name) {
@@ -247,7 +258,6 @@ static void reload_cfg(Config *oldcfg, Socket *server_sock, ThreadPool **tp) {
 	read_cfg_file(&newcfg);
 
 	if(strcmp(newcfg.pwd, oldcfg->pwd) != 0) {
-		printf("%s\n", newcfg.pwd);
 		if(change_dir(newcfg.pwd)) {
 			perr("Error chdir");
 			exit(1);

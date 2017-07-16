@@ -16,6 +16,7 @@
 
 #define SEEDS_FILE "cryptor_seeds"
 
+/**Struct that holds the arguments passed to the program*/
 typedef struct ParsedArgs {
 	const char *cmd;         /*The command passed from arguments*/
 	unsigned long host_addr; /*The server address*/
@@ -24,6 +25,7 @@ typedef struct ParsedArgs {
 	const char *path;        /*The path for the ENCR and DECR command*/
 } ParsedArgs;
 
+/**Struct for passing arguments to the thread that handles ENCR and DECR commands*/
 typedef struct ThreadArgs {
 	ParsedArgs args;
 	Socket s;
@@ -61,7 +63,7 @@ int main(int argc, char **argv) {
 		save_seed(args.seed, args.path);
 
 	printf("Server responded with code %d: %s.\n\n", ret_code, str_retcode(ret_code));
-	//If the response of the server is 300 (i.e. the server will send more output) read the remaining output
+	//If the response of the server is 300 read the remaining output
 	if(ret_code == RETMORE_INT) {
 		cryptor_print_more(sock);
 	}

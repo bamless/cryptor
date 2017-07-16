@@ -61,7 +61,7 @@ void next_dir(Dir *dir, DirEntry *entry) {
 		elog("Error: has_next must be called at least once befor next_dir");
 		return;
 	}
-	memcpy(entry->name, dir->ffd.cFileName, 256);
+	memcpy(entry->name, dir->ffd.cFileName, sizeof(entry->name));
 	if(dir->ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 		entry->type = DIRECTORY;
 	} else {
