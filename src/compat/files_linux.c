@@ -191,13 +191,7 @@ int rename_file(const char *oldpath, const char *newpath) {
 }
 
 char* get_abs(const char *path) {
-	char resolved[PATH_MAX];
-	if(realpath(path, resolved) == NULL) {
-		return NULL;
-	}
-	char *resolved_dyn = malloc(strlen(resolved) + 1);
-	strcpy(resolved_dyn, resolved);
-	return resolved_dyn;
+	return realpath(path, NULL);
 }
 
 static int get_err() {
