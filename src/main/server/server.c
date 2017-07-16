@@ -110,6 +110,7 @@ static int parse_numthreads(const char *numthreads_str);
 
 static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 	int c = 0;
+	opterr = 0;
 	while((c = getopt(argc, argv, ":c:n:p:f:")) != -1) {
 		switch(c) {
 			case 'c':
@@ -219,7 +220,7 @@ static void free_config(Config *cfg) {
 }
 
 static void usage(const char *exec_name) {
-	elogf("Usage: %s [-p port] [-n threads] [-f conffile] -c pwd\n", exec_name);
+	elogf("Usage: %s [-p port] [-n threads] [-f conf_file] -c pwd\n", exec_name);
 	exit(1);
 }
 

@@ -89,6 +89,7 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 	int c;
 	args->cmd = NULL;
 	args->seed = 0;
+	opterr = 0;
 	switch ((c = getopt(argc, argv, "lRed"))) {
 		case 'l':
 		case 'R':
@@ -174,6 +175,6 @@ static void save_seed(unsigned int seed, const char *path) {
 }
 
 static void usage(char *exec_name) {
-	elogf("Usage: %s [-l | -R | -e seed path | -d seed path] ipaddr:port\n", exec_name);
+	elogf("Usage: %s [-l | -R | -e seed path | -d seed path] ipaddr[:port]\n", exec_name);
 	exit(1);
 }
