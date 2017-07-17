@@ -172,21 +172,21 @@ static void read_cfg_file(Config *cfg) {
 		char *conf = strtok(line, " ");
 		char *confarg = strtok(NULL, " ");
 		if(confarg == NULL) {
-			elogf("Argument missing for conf file option `%s`\n", conf);
-			break;
+			elogf("Argument missing for option `%s` of config file\n", conf);
+			continue;
 		}
 
 		if(strcmp(conf, "threads") == 0) {
 			cfg->thread_count = parse_numthreads(confarg);
 			if(cfg->thread_count == 0) {
 				elog("Option `threads` of conf file is malformed.");
-				break;
+				continue;
 			}
 		} else if(strcmp(conf, "port") == 0) {
 			cfg->port = parse_port(confarg);
 			if(cfg->port == 0) {
 				elog("Option `port` of conf file is malformed.");
-				break;
+				continue;
 			}
 		} else if(strcmp(conf, "directory") == 0) {
 			free(cfg->pwd);
