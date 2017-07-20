@@ -37,7 +37,7 @@ void thread_join(Thread *thread) {
 }
 
 static void* start_func_impl(void *funcargs) {
-    struct funcargs *fa = (struct funcargs *) func_args;
+    struct funcargs *fa = (struct funcargs *) funcargs;
     void (*func)(void *, void *) = fa->func;
     void *args = fa->args;
     void *retval = fa->retval;
