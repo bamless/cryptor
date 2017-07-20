@@ -18,7 +18,9 @@
 #define PAR_BLCK (256 * 1024)
 
 int encrypt(File plainfd, const char *out_name, int *key, int key_len) {
-    if(((key_len * INT_LEN) & (key_len * INT_LEN - 1)) != 0 || (key_len * INT_LEN) > PAR_BLCK || out_name == NULL)
+    //if key_len not a power of 2 or greater than PAR_BLCK or out_name is NULL
+    if(((key_len * INT_LEN) & (key_len * INT_LEN - 1)) != 0 ||
+                        (key_len * INT_LEN) > PAR_BLCK || out_name == NULL)
         return -1;
 
     fsize_t size;
@@ -34,7 +36,11 @@ int encrypt(File plainfd, const char *out_name, int *key, int key_len) {
 
     MemoryMap *plain = memory_map(plainfd, size, MMAP_READ);
     MemoryMap *cipher = memory_map(cipherfd, size, MMAP_READ | MMAP_WRITE);
-    if(!cipher || !plain) return -1;
+    if(!cipher || !plain) {
+        unlock_file(cipherfd, 0, size);
+        close_file(cipherfd);
+        return -1;
+    }
 
     fsize_t num_chunks = ceil(size/((float) PAR_BLCK));
     #pragma omp parallel for

@@ -9,7 +9,7 @@
  * the 2 impl. that a couple of macros should be enough to unify them.
  */
 
-//Unix sockets
+/* Unix sockets */
 #ifdef __unix
 #include <sys/types.h>  /*not required on linux but required on other unix systems*/
 #include <sys/socket.h>
@@ -23,7 +23,7 @@ typedef int Socket;
 #define socket_close(sock) close(sock)
 #define is_socket_valid(sock) (sock >= 0)
 
-//Windows sockets
+/* Windows sockets */
 #elif _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>

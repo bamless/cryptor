@@ -62,7 +62,7 @@ typedef HANDLE File;
 
 /*
  * Opens a file at path path. If the file is not found or an error occurs
- * err is nonzero and the return value of File is undefined. It accepts flags.
+ * err is nonzero and the return value of File is undefined.
  * The opened file does not have any lock on it, the user should call lock_file
  * for explicit locking.
  * @arg path the path of the file

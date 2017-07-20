@@ -16,7 +16,7 @@ MemoryMap *memory_map(File f, fsize_t length, int flags) {
         return NULL;
     }
     if(length > size) {
-        //stretch the length of the file to the length of the file mapping
+        //stretch the file to the length of the file mapping
         if(lseek(f, length-1, SEEK_SET) == -1) return NULL;
         if(write(f, "", 1) == -1) return NULL;
     }

@@ -6,17 +6,13 @@
 #include <string.h>
 #include <errno.h>
 
-/**Windows and Linux take in a start function with different return type. In order
-to create a unified interface this library takes in a start func with a void return
-type and then encapsulates it in a platform-specific function with the platform's
-return type. The funcargs struct takes in the pointer to our platform agnostic
-function and void* args and gets passed as an input to the plaform-specific start func.*/
 struct funcargs {
     void (*func)(void *, void *);
     void *args;
     void *retval;
 };
-static void* start_func_impl(void *func_args);
+//wrapper for pthread start function.
+static void* start_func_impl(void *funcargs);
 //pthread functions are not guaranteed to set errno, so we must obtain the error msg from the error returned
 static void error_check(const char *msg, int err);
 
@@ -40,7 +36,7 @@ void thread_join(Thread *thread) {
     error_check("Error: thread_join", err);
 }
 
-static void* start_func_impl(void *func_args) {
+static void* start_func_impl(void *funcargs) {
     struct funcargs *fa = (struct funcargs *) func_args;
     void (*func)(void *, void *) = fa->func;
     void *args = fa->args;

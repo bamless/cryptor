@@ -10,8 +10,9 @@
 #endif
 
 /*
- * Cross platform thread module. It encapsulates platform-specific thread API
- * and exposes a unified interface. The error checking is handled by the functions.
+ * Cross platform thread and synchronization module.
+ * It encapsulates platform-specific thread API and exposes a unified interface.
+ * The error checking is handled by the functions.
  */
 
 /**Threads**/

@@ -10,7 +10,8 @@ struct funcargs {
     void *args;
     void *retval;
 };
-static DWORD WINAPI start_func_impl(void *args);
+//wrapper for winthread start function
+static DWORD WINAPI start_func_impl(void *funcargs);
 
 void thread_create(Thread *thread, void (*func)(void *, void *), void *arg, void *retval) {
     struct funcargs *fa = malloc(sizeof(struct funcargs));
@@ -27,7 +28,7 @@ void thread_create(Thread *thread, void (*func)(void *, void *), void *arg, void
 }
 
 
-static DWORD WINAPI start_func_impl(void *func_args) {
+static DWORD WINAPI start_func_impl(void *funcargs) {
     struct funcargs *fa = (struct funcargs *) func_args;
     void (*func)(void *, void *) = fa->func;
     void *args = fa->args;
