@@ -32,7 +32,7 @@ MemoryMap *memory_map(File f, fsize_t length, int flags) {
         mmap_flags |= PROT_NONE;
     }
 
-    void *map = mmap(NULL, (size_t) length, mmap_flags, MAP_SHARED, f, 0);
+    void *map = mmap(NULL, length, mmap_flags, MAP_SHARED, f, 0);
     if(map == MAP_FAILED) return NULL;
 
     MemoryMap *mmap = malloc(sizeof(MemoryMap));
@@ -40,7 +40,7 @@ MemoryMap *memory_map(File f, fsize_t length, int flags) {
         munmap(map, length);
         return NULL;
     }
-    mmap->length = (size_t) length;
+    mmap->length = length;
     mmap->map = map;
 
     return mmap;
