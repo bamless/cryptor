@@ -1,6 +1,5 @@
 #include "threadpool.h"
 #include "thread.h"
-#include "logging.h"
 
 #include <stdlib.h>
 #include <string.h>

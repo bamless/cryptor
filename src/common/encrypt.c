@@ -9,9 +9,6 @@
 #include <math.h>
 #include <omp.h>
 
-
-#include "logging.h"
-
 #define INT_LEN sizeof(int) //int length in bytes
 
 //dimension, in bytes, of a thread unit of execution
