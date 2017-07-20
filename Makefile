@@ -111,7 +111,7 @@ createdirs:
 	@mkdir -p $(dir $(OBJECTS_COMMON))
 	@mkdir -p $(BIN)
 
-# Main target, it creates the folders needed by the build and launches 'all' target
+# server and client targets
 .PHONY: server
 server: createdirs
 	@echo "Beginning build..."
