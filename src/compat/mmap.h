@@ -13,6 +13,13 @@ typedef struct MemoryMap MemoryMap;
 #define MMAP_READ 1
 /*The memory-mapped pages can be executed*/
 #define MMAP_WRITE 2
+/*The memory map is not backed by any file, the File argument is ignored*/
+#define MMAP_ANONYMOUS 4
+
+enum MapMode {
+    MMAP_SHARED,
+    MMAP_PRIVATE
+};
 
 /*
  * Maps a file of length 'length' in memory.
@@ -21,8 +28,11 @@ typedef struct MemoryMap MemoryMap;
  * @arg mode MMAP_READ for readonly, MMAP_WRITE for wronly, or bitwise or of the two
  * @return a MemoryMap struct on success, NULL on failure
  */
-MemoryMap *memory_map(File f, fsize_t length, int mode);
-/*Unmaps a previously mmapped file. @return 0 on succsess, non 0 otherwise*/
+MemoryMap *memory_map(File f, fsize_t length, int flags, enum MapMode mode);
+/*
+ * Unmaps a previously mmapped file.
+ * @return 0 on succsess, non 0 otherwise
+ */
 int memory_unmap(MemoryMap *mmap);
 /*
  * Maps a view of a file mapping into the address space of a calling process of

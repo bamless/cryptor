@@ -14,12 +14,6 @@
 #include <inttypes.h>
 #include <math.h>
 
-#define KEY_LEN 8 //the key length in integers
-
-#ifdef _WIN32
-static int rand_r(unsigned int *seed);
-#endif
-
 static void handle_list_commands(Socket client, int is_recursive);
 static void handle_encrytion_commands(Socket client, int is_decrypt);
 
@@ -118,7 +112,6 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
 }
 
 static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **path);
-static void generate_key(unsigned int seed, int *key, int key_len);
 static char* get_out_name(const char *name, int is_decrypt);
 static int strendswith(const char *str, const char *substr);
 
@@ -148,10 +141,8 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
         return;
     }
 
-    int key[KEY_LEN];
-    generate_key(seed, key, KEY_LEN);
     char *out = get_out_name(path, is_decrypt);
-    if(encrypt(file, out, key, KEY_LEN)) {
+    if(encrypt(file, out, seed)) {
         send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
         unlock_file(file, 0, s);
         close_file(file);
@@ -163,7 +154,7 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
     unlock_file(file, 0, s);
     close_file(file);
 
-    delete_file(path);
+    if(delete_file(path)) perr("Error deleting plaintext file");
 
     free(path);
     free(out);
@@ -214,12 +205,6 @@ static int strendswith(const char *str, const char *substr) {
     return strcmp(str + (str_len - substr_len), substr) == 0;
 }
 
-static void generate_key(unsigned int seed, int *key, int key_len) {
-    for(int i = 0; i < key_len; i++) {
-        key[i] = rand_r(&seed);
-    }
-}
-
 static char* get_out_name(const char *name, int is_decrypt) {
     char *out;
     if(is_decrypt) {
@@ -234,21 +219,3 @@ static char* get_out_name(const char *name, int is_decrypt) {
     }
     return out;
 }
-
-//Mingw-w64 does not seem to have rand_r implemented. The following implementation is
-//taken from the Mingw source code on sourceforge
-#ifdef _WIN32
-/**Thread safe random number generator.*/
-static int rand_r(unsigned int *seed) {
-        long k;
-        long s = (long)(*seed);
-        if (s == 0)
-            s = 0x12345987;
-        k = s / 127773;
-        s = 16807 * (s - k * 127773) - 2836 * k;
-        if (s < 0)
-            s += 2147483647;
-        (*seed) = (unsigned int)s;
-        return (int)(s & RAND_MAX);
-}
-#endif

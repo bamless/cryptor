@@ -97,6 +97,28 @@ File open_file(const char *path, int mode, int *err) {
 	return f;
 }
 
+File create_tmp_file() {
+	TCHAR temp_file_name[MAX_PATH];
+    TCHAR temp_path[MAX_PATH];
+
+	DWORD ret = GetTempPath(MAX_PATH, temp_path);
+	if (ret > MAX_PATH || (ret == 0)) {
+		return INVALID_HANDLE_VALUE;
+	}
+
+	if(GetTempFileName(temp_path, "tmp", 0, temp_file_name) == 0) {
+		return INVALID_HANDLE_VALUE;
+	}
+	return CreateFile((LPTSTR) temp_file_name, // file name
+            	GENERIC_WRITE | GENERIC_READ,  // open for read/write
+            	0,                             // do not share
+            	NULL,                          // default security
+                CREATE_ALWAYS,                 // overwrite existing
+                FILE_ATTRIBUTE_NORMAL |        // normal file, and delete on close
+				FILE_FLAG_DELETE_ON_CLOSE,
+            	NULL);
+}
+
 int close_file(File file) {
 	if(!CloseHandle(file)) {
 		return get_err();

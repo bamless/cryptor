@@ -109,6 +109,11 @@ File open_file(const char *path, int mode, int *err) {
 	return file;
 }
 
+File create_tmp_file() {
+	FILE *tmp = tmpfile(); //creates a file and unlinks, so when the file is closed is deleted
+	return fileno(tmp);
+}
+
 int close_file(File file) {
 	if(close(file)) {
 		return get_err();

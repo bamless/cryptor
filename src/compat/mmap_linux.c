@@ -9,30 +9,40 @@ struct MemoryMap {
     size_t length;
 };
 
-MemoryMap *memory_map(File f, fsize_t length, int flags) {
+MemoryMap *memory_map(File f, fsize_t length, int flags, enum MapMode mode) {
     if(length < 0) return NULL;
     fsize_t size;
     if(fget_file_size(f, &size)) {
         return NULL;
     }
-    if(length > size) {
+    if(length > size && !(flags & MMAP_ANONYMOUS)) {
         //stretch the file to the length of the file mapping
-        if(lseek(f, length-1, SEEK_SET) == -1) return NULL;
-        if(write(f, "", 1) == -1) return NULL;
+        if(ftruncate(f, length)) return NULL;
+    }
+
+    int mmap_prot = 0;
+    if(flags & MMAP_READ) {
+        mmap_prot |= PROT_READ;
+    }
+    if(flags & MMAP_WRITE) {
+        mmap_prot |= PROT_WRITE;
+    }
+    if(!(flags & MMAP_READ) && !(flags & MMAP_WRITE)) {
+        mmap_prot |= PROT_NONE;
     }
 
     int mmap_flags = 0;
-    if(flags & MMAP_READ) {
-        mmap_flags |= PROT_READ;
+    if(flags & MMAP_ANONYMOUS) {
+        mmap_flags |= MAP_ANONYMOUS;
+        f = -1; //according to man, some implementation may require a -1 fd on MAP_ANONYMOUS
     }
-    if(flags & MMAP_WRITE) {
-        mmap_flags |= PROT_WRITE;
-    }
-    if(!flags) {
-        mmap_flags |= PROT_NONE;
+    if(mode == MMAP_PRIVATE) {
+        mmap_flags |= MAP_PRIVATE;
+    } else if(mode == MMAP_SHARED) {
+        mmap_flags |= MAP_SHARED;
     }
 
-    void *map = mmap(NULL, length, mmap_flags, MAP_SHARED, f, 0);
+    void *map = mmap(NULL, length, mmap_prot, mmap_flags, f, 0);
     if(map == MAP_FAILED) return NULL;
 
     MemoryMap *mmap = malloc(sizeof(MemoryMap));
