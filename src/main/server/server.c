@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef __unix
- 	//daemonize();
+ 	daemonize();
 
 	struct sigaction sa;
 	sa.sa_flags = 0; //we want SIGHUP to interrupt the accept syscall, so no SA_RESTART flag
