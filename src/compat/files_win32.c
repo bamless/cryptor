@@ -107,7 +107,7 @@ File create_tmp_file(const char *path) {
             	0,                             // do not share
             	NULL,                          // default security
                 CREATE_ALWAYS,                 // overwrite existing
-                FILE_ATTRIBUTE_NORMAL |        // normal file, and delete on close
+                FILE_ATTRIBUTE_NORMAL |        // normal file and delete on close
 				FILE_FLAG_DELETE_ON_CLOSE,
             	NULL);
 }

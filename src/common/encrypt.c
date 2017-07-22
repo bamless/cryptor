@@ -24,11 +24,11 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
 
     fsize_t size;
     if(fget_file_size(plainfd, &size)) {
-        perr("Error encrypt");
+        perr("Error getting plaintext file size");
         return -1;
     }
 
-    //create a temporary file for the one-time pad key and maps it
+    //create a temporary file for the one-time pad key and map it
     File backing = create_tmp_file(".");
     MemoryMap *key_map = generate_key(size, key_seed, backing); //generate the key
     if(!key_map) {
@@ -38,7 +38,7 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
     //map the plaintext and ciphertext file
     MemoryMap *plain = memory_map(plainfd, size, MMAP_READ, MMAP_PRIVATE);
     if(!plain) {
-        perr("Error mapping the file for encrypting");
+        perr("Error mapping the file for encryption");
         memory_unmap(key_map);
         close_file(backing);
         return -1;
@@ -123,12 +123,24 @@ static MemoryMap* generate_key(fsize_t size, unsigned int seed, File backing) {
     MemoryMap *key_mmap = memory_map(backing, size, MMAP_READ | MMAP_WRITE, MMAP_SHARED);
     if(!key_mmap) return NULL;
 
-    int *key = mmap_mapview(key_mmap, 0, size);
-    if(!key) return NULL;
-    for(fsize_t i = 0; i < size / INT_LEN; i++) {
-        key[i] = rand_r(&seed);
+    //map 1MB view at a time, to avoid virtual memory problems with large files under Windows
+    fsize_t chunks = ceil(size/(float) (1024 * 1024));
+    for(fsize_t n = 0; n < chunks; n++) {
+        fsize_t from = n * (1024 * 1024);
+        fsize_t len = (from + (1024 * 1024)) > size ? size - from : (1024 * 1024);
+
+        int *key = mmap_mapview(key_mmap, from, len);
+        if(!key) {
+            memory_unmap(key_mmap);
+            return NULL;
+        }
+
+        fsize_t int_len = len / INT_LEN;
+        for(int i = 0; i < int_len; i++) {
+            key[i] = rand_r(&seed);
+        }
+        mmap_unmapview(key);
     }
-    mmap_unmapview(key);
 
     return key_mmap;
 }
