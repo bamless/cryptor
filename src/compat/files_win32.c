@@ -97,16 +97,9 @@ File open_file(const char *path, int mode, int *err) {
 	return f;
 }
 
-File create_tmp_file() {
-	TCHAR temp_file_name[MAX_PATH];
-    TCHAR temp_path[MAX_PATH];
-
-	DWORD ret = GetTempPath(MAX_PATH, temp_path);
-	if (ret > MAX_PATH || (ret == 0)) {
-		return INVALID_HANDLE_VALUE;
-	}
-
-	if(GetTempFileName(temp_path, "tmp", 0, temp_file_name) == 0) {
+File create_tmp_file(const char *path) {
+    TCHAR temp_file_name[MAX_PATH];
+	if(GetTempFileName(path, "tmp", 0, temp_file_name) == 0) {
 		return INVALID_HANDLE_VALUE;
 	}
 	return CreateFile((LPTSTR) temp_file_name, // file name

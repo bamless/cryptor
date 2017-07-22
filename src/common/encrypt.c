@@ -29,7 +29,7 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
     }
 
     //create a temporary file for the one-time pad key and maps it
-    File backing = create_tmp_file();
+    File backing = create_tmp_file(".");
     MemoryMap *key_map = generate_key(size, key_seed, backing); //generate the key
     if(!key_map) {
         close_file(backing);

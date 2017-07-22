@@ -109,9 +109,17 @@ File open_file(const char *path, int mode, int *err) {
 	return file;
 }
 
-File create_tmp_file() {
-	FILE *tmp = tmpfile(); //creates a file and unlinks, so when the file is closed is deleted
-	return fileno(tmp);
+File create_tmp_file(const char *path) {
+	char tmp[10];
+	strcpy(tmp, "tmpXXXXXX");
+	char *full_path = malloc(strlen(path) + 11);
+	sprintf(full_path, "%s/%s", path, tmp);
+
+	int tmpfd = mkstemp(full_path);
+	unlink(full_path);
+	free(full_path);
+
+	return tmpfd;
 }
 
 int close_file(File file) {

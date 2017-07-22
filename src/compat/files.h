@@ -81,8 +81,8 @@ int close_file(File file);
 int lock_file(File f, fsize_t off, fsize_t len);
 int unlock_file(File f, fsize_t off, fsize_t len);
 
-/*Returns a temporary file. The file will be deleted on close*/
-File create_tmp_file();
+/*Creates a temporary file in the specified path. The file will be deleted on close_file*/
+File create_tmp_file(const char *path);
 /*
  * Returns the size of the file at path. the value returned by this funtion in fsize
  * is guaranteed to be >= 0. The actual type of fsize_t is implementation defined.
