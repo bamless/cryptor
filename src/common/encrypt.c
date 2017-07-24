@@ -93,7 +93,7 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
             char *key_bytes = (char *) key;
             char *plain_bytes = (char *) plain_chunk;
             char *cipher_bytes = (char *) cipher_chunk;
-            for(int i = len - remainder; i <= len; i++) {
+            for(int i = len - remainder; i < len; i++) {
                 cipher_bytes[i] = plain_bytes[i] ^ key_bytes[i];
             }
         }
