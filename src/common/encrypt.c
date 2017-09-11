@@ -51,7 +51,7 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
 
     //generates a new seed for every thread using the supplied seed
     size_t key_len = ceil(size/(float) PAR_BLCK);
-    unsigned int *seeds = malloc(sizeof(int) * key_len);
+    unsigned int *seeds = malloc(sizeof(unsigned int) * key_len);
     for(size_t i = 0; i < key_len; i++) {
         seeds[i] = rand_r(&key_seed);
     }
