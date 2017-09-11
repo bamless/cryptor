@@ -16,7 +16,6 @@
 static int rand_r(unsigned int *seed);
 #endif
 
-static MemoryMap* generate_key(fsize_t size, unsigned int seed, File backing);
 static int create_cipher_file(const char *name, fsize_t size, File *out);
 
 int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
@@ -28,19 +27,10 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
         return -1;
     }
 
-    //create a temporary file for the one-time pad key and map it
-    File backing = create_tmp_file(".");
-    MemoryMap *key_map = generate_key(size, key_seed, backing); //generate the key
-    if(!key_map) {
-        close_file(backing);
-        return -1;
-    }
     //map the plaintext and ciphertext file
     MemoryMap *plain = memory_map(plainfd, size, MMAP_READ, MMAP_PRIVATE);
     if(!plain) {
         perr("Error mapping the file for encryption");
-        memory_unmap(key_map);
-        close_file(backing);
         return -1;
     }
     //create and mmap the ciphertext file
@@ -48,23 +38,27 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
     if(create_cipher_file(out_name, size, &cipherfd)) {
         perr("Error mapping the cipher file");
         memory_unmap(plain);
-        memory_unmap(key_map);
-        close_file(backing);
+        return -1;
     }
     MemoryMap *cipher = memory_map(cipherfd, size, MMAP_READ | MMAP_WRITE, MMAP_SHARED);
     if(!cipher) {
         perr("Error mapping the cipher file");
         memory_unmap(plain);
-        memory_unmap(key_map);
-        close_file(backing);
         close_file(cipherfd);
         delete_file(out_name); //delete the cipher file on error
         return -1;
     }
 
+    //generates a new seed for every thread using the supplied seed
+    size_t key_len = ceil(size/(float) PAR_BLCK);
+    unsigned int *seeds = malloc(sizeof(int) * key_len);
+    for(size_t i = 0; i < key_len; i++) {
+        seeds[i] = rand_r(&key_seed);
+    }
+
     //the number of 256Kb chunks in the file
     fsize_t num_chunks = ceil(size/((float) PAR_BLCK));
-    //finally crypt the file
+    //finally encrypt the file
     int result = 0;
     #pragma omp parallel for
     for(fsize_t n = 0; n < num_chunks; n++) {
@@ -74,25 +68,27 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
         //map views of the size of the chunk
         int *plain_chunk = mmap_mapview(plain, from, len);
         int *cipher_chunk = mmap_mapview(cipher, from, len);
-        int *key = mmap_mapview(key_map, from, len);
-        if(!cipher_chunk || !plain_chunk || !key) {
+        if(!cipher_chunk || !plain_chunk) {
             perr("Error getting mapped file view");
             #pragma omp atomic write
             result = -1; //error
         }
 
-        //crypt the bytes of the chunk in 4 bytes groups
+        //encrypt the bytes of the chunk in 4 bytes groups
         fsize_t len32 = floor(len/(float) INT_LEN);
         for(int i = 0; i < len32; i++) {
-            cipher_chunk[i] = plain_chunk[i] ^ key[i];
+            cipher_chunk[i] = plain_chunk[i] ^ rand_r(&seeds[n]);
         }
 
-        //if the file is not a multiple of 4 then encrypt the last bytes 1 byte at a time
+        //if the file is not a multiple of 4 then encrypt the last bytes 1 at a time
         int remainder;
         if((remainder = len % INT_LEN) != 0) {
-            char *key_bytes = (char *) key;
+            int k = rand_r(&seeds[n]);
+
+            char *key_bytes = (char *) &k;
             char *plain_bytes = (char *) plain_chunk;
             char *cipher_bytes = (char *) cipher_chunk;
+
             for(int i = len - remainder; i < len; i++) {
                 cipher_bytes[i] = plain_bytes[i] ^ key_bytes[i];
             }
@@ -100,49 +96,19 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
 
         mmap_unmapview(plain_chunk);
         mmap_unmapview(cipher_chunk);
-        mmap_unmapview(key);
     }
 
     memory_unmap(plain);
     memory_unmap(cipher);
-    memory_unmap(key_map);
+    free(seeds);
 
     unlock_file(cipherfd, 0, size);
     close_file(cipherfd);
-    close_file(backing);
-    if(result == -1) delete_file(out_name);
+
+    if(result == -1)
+        delete_file(out_name);
+
     return result;
-}
-
-/*
- * Generates a one-time pad key and returns a memory map to the location containing it.
- * the size of the region of memory is the closest multiple of 4 to size rounding up.
- */
-static MemoryMap* generate_key(fsize_t size, unsigned int seed, File backing) {
-    size = ceil(size/(float) INT_LEN) * INT_LEN;
-    MemoryMap *key_mmap = memory_map(backing, size, MMAP_READ | MMAP_WRITE, MMAP_SHARED);
-    if(!key_mmap) return NULL;
-
-    //map 1MB view at a time, to avoid virtual memory problems with large files under Windows
-    fsize_t chunks = ceil(size/(float) (1024 * 1024));
-    for(fsize_t n = 0; n < chunks; n++) {
-        fsize_t from = n * (1024 * 1024);
-        fsize_t len = (from + (1024 * 1024)) > size ? size - from : (1024 * 1024);
-
-        int *key = mmap_mapview(key_mmap, from, len);
-        if(!key) {
-            memory_unmap(key_mmap);
-            return NULL;
-        }
-
-        fsize_t int_len = len / INT_LEN;
-        for(int i = 0; i < int_len; i++) {
-            key[i] = rand_r(&seed);
-        }
-        mmap_unmapview(key);
-    }
-
-    return key_mmap;
 }
 
 /*
