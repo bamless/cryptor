@@ -7,7 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-typedef off_t fsize_t;    /*fstat returns an off_t*/
+typedef off_t fsize_t;	  /*fstat returns an off_t*/
 #elif _WIN32
 #include <inttypes.h>
 #include <windows.h>
@@ -30,12 +30,12 @@ typedef struct Dir Dir; //opaque type, to provide encapsulation
 
 /*Enum for the different file types a directory can hold*/
 enum FileType {
-    NFILE, DIRECTORY, UNKNW
+	NFILE, DIRECTORY, UNKNW
 };
 /*Struct holding a directory entry info*/
 typedef struct DirEntry {
-    enum FileType type;
-    char name[256];
+	enum FileType type;
+	char name[256];
 } DirEntry;
 
 /*Opens a directory at path "path. If it fails returns NULL and err is set to the appropriate error code"*/
@@ -56,8 +56,8 @@ typedef HANDLE File;
 #endif
 
 /**Flags for open_file func*/
-#define READ 1   /*Opens the file for reading*/
-#define WRITE 2  /*Opens the file for writing*/
+#define READ 1	 /*Opens the file for reading*/
+#define WRITE 2	 /*Opens the file for writing*/
 #define CREATE 4 /*Creates the file if it doesn't exist*/
 
 /*

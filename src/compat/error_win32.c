@@ -11,12 +11,12 @@ static void print_error(const char *msg, DWORD errorMessageID) {
 
 	LPSTR buffer;
 	if (!FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-                       NULL,
-                       errorMessageID,
-                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                       (LPSTR) &buffer,
-                       0,
-                       NULL)) {
+					   NULL,
+					   errorMessageID,
+					   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					   (LPSTR) &buffer,
+					   0,
+					   NULL)) {
 		printf("Format message failed with %lu\n", GetLastError());
 		return;
 	}

@@ -18,10 +18,10 @@
 #define DEFAULT_THREADS 20
 
 typedef struct Config {
-	char *conf_file;     /*The configuration file path*/
-	u_short port;        /*The server port*/
-	char *pwd;           /*The process working directory*/
-	int thread_count;    /*The number of threads of the threadpool*/
+	char *conf_file;	 /*The configuration file path*/
+	u_short port;		 /*The server port*/
+	char *pwd;			 /*The process working directory*/
+	int thread_count;	 /*The number of threads of the threadpool*/
 } Config;
 
 /*Linux specific functions for reloading the confs on SIGHUP and for daemonizing*/
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 	}
 
 #ifdef __unix
- 	daemonize();
+	daemonize();
 
 	struct sigaction sa;
 	sa.sa_flags = 0; //we want SIGHUP to interrupt the accept syscall, so no SA_RESTART flag
@@ -140,9 +140,9 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 				break;
 			case '?':
 				if(isprint(optopt))
-	  				elogf("Unknown option `-%c`.\n", optopt);
+					elogf("Unknown option `-%c`.\n", optopt);
 				else
-	  				elogf("Unknown option character `\\x%x`.\n", optopt);
+					elogf("Unknown option character `\\x%x`.\n", optopt);
 				usage(argv[0]);
 				break;
 			case ':':

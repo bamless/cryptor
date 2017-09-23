@@ -17,8 +17,8 @@ typedef struct MemoryMap MemoryMap;
 #define MMAP_ANONYMOUS 4
 
 enum MapMode {
-    MMAP_SHARED,
-    MMAP_PRIVATE
+	MMAP_SHARED,
+	MMAP_PRIVATE
 };
 
 /*

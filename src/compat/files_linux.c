@@ -162,7 +162,7 @@ int lock_file(File f, fsize_t off, fsize_t len) {
 	lock.l_len = len;
 	lock.l_pid = getpid();
 
- 	if(fcntl(f, F_SETLK, &lock)) {
+	if(fcntl(f, F_SETLK, &lock)) {
 		return get_err();
 	}
 	return 0;
@@ -176,7 +176,7 @@ int unlock_file(File f, fsize_t off, fsize_t len) {
 	lock.l_len = len;
 	lock.l_pid = getpid();
 
- 	if(fcntl(f, F_SETLK, &lock)) {
+	if(fcntl(f, F_SETLK, &lock)) {
 		return get_err();
 	}
 	return 0;

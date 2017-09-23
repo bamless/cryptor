@@ -21,10 +21,10 @@
 #endif
 
 #ifdef __unix
-    #define SLEEP(x) usleep((x) * 1000);
+	#define SLEEP(x) usleep((x) * 1000);
 #endif
 #ifdef _WIN32
-    #define SLEEP(x) Sleep((x));
+	#define SLEEP(x) Sleep((x));
 #endif
 
 #define NUM_THREADS 7

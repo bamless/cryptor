@@ -98,18 +98,18 @@ File open_file(const char *path, int mode, int *err) {
 }
 
 File create_tmp_file(const char *path) {
-    TCHAR temp_file_name[MAX_PATH];
+	TCHAR temp_file_name[MAX_PATH];
 	if(GetTempFileName(path, "tmp", 0, temp_file_name) == 0) {
 		return INVALID_HANDLE_VALUE;
 	}
 	return CreateFile((LPTSTR) temp_file_name, // file name
-            	GENERIC_WRITE | GENERIC_READ,  // open for read/write
-            	0,                             // do not share
-            	NULL,                          // default security
-                CREATE_ALWAYS,                 // overwrite existing
-                FILE_ATTRIBUTE_NORMAL |        // normal file and delete on close
+				GENERIC_WRITE | GENERIC_READ,  // open for read/write
+				0,							   // do not share
+				NULL,						   // default security
+				CREATE_ALWAYS,				   // overwrite existing
+				FILE_ATTRIBUTE_NORMAL |		   // normal file and delete on close
 				FILE_FLAG_DELETE_ON_CLOSE,
-            	NULL);
+				NULL);
 }
 
 int close_file(File file) {
@@ -161,7 +161,7 @@ int fget_file_size(File f, fsize_t *fsize) {
 	DWORD dwFileSizeLow = 0;
 	DWORD dwFileSizeHigh = 0;
 	dwFileSizeLow = GetFileSize(f, &dwFileSizeHigh);
- 	*fsize = (((fsize_t) dwFileSizeHigh) << 32) | dwFileSizeLow; //We are guaranteed by the WinAPI that DWORD is always 32 bit
+	*fsize = (((fsize_t) dwFileSizeHigh) << 32) | dwFileSizeLow; //We are guaranteed by the WinAPI that DWORD is always 32 bit
 	return 0;
 }
 

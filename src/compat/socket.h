@@ -11,7 +11,7 @@
 
 /* Unix sockets */
 #ifdef __unix
-#include <sys/types.h>  /*not required on linux but required on other unix systems*/
+#include <sys/types.h>	/*not required on linux but required on other unix systems*/
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -34,18 +34,18 @@ typedef int socklen_t; // needed in roder to use accept in a portable way (avoid
 #define MSG_NOSIGNAL 0 //option needed to stop the soket from sending sigpipes on linux
 
 #define socket_startup()  do { \
-        WSADATA data; \
-        if(WSAStartup(MAKEWORD(2,2), &data)) { \
-            perr_sock("Error: socket startup"); \
-            exit(1); \
-        } \
-    } while(0)
+		WSADATA data; \
+		if(WSAStartup(MAKEWORD(2,2), &data)) { \
+			perr_sock("Error: socket startup"); \
+			exit(1); \
+		} \
+	} while(0)
 #define socket_cleanup() do { \
-        if(WSACleanup()) { \
-            perr_sock("Error: socket cleanup"); \
-            exit(1); \
-        } \
-    } while(0)
+		if(WSACleanup()) { \
+			perr_sock("Error: socket cleanup"); \
+			exit(1); \
+		} \
+	} while(0)
 #define socket_close(sock) closesocket(sock)
 #define is_socket_valid(sock) (sock != INVALID_SOCKET)
 #endif

@@ -37,27 +37,27 @@ Socket init_server_socket(u_short port) {
 		socket_cleanup();
 		exit(1);
 	}
-    return server_sock;
+	return server_sock;
 }
 
 Socket connect_socket(unsigned long addr, u_short port) {
-    struct sockaddr_in server;
+	struct sockaddr_in server;
 
-    memset(&server, 0, sizeof(server));
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = addr;
-    server.sin_port = port;
+	memset(&server, 0, sizeof(server));
+	server.sin_family = AF_INET;
+	server.sin_addr.s_addr = addr;
+	server.sin_port = port;
 
-    Socket sock = socket(AF_INET, SOCK_STREAM, 0);
-    if(!is_socket_valid(sock)) {
-        perr_sock("Error: creating socket");
-        socket_cleanup();
-        exit(1);
-    }
-    if(connect(sock, (struct sockaddr *) &server, sizeof(server))) {
-        perr_sock("Error bind");
-        socket_cleanup();
-        exit(1);
-    }
-    return sock;
+	Socket sock = socket(AF_INET, SOCK_STREAM, 0);
+	if(!is_socket_valid(sock)) {
+		perr_sock("Error: creating socket");
+		socket_cleanup();
+		exit(1);
+	}
+	if(connect(sock, (struct sockaddr *) &server, sizeof(server))) {
+		perr_sock("Error bind");
+		socket_cleanup();
+		exit(1);
+	}
+	return sock;
 }
