@@ -9,7 +9,7 @@
 #include <math.h>
 #include <omp.h>
 
-#define INT_LEN sizeof(int)	  //int length in bytes
+#define INT_LEN sizeof(int)   //int length in bytes
 #define PAR_BLCK (256 * 1024) //dimension, in bytes, of a thread unit of execution
 
 #ifdef _WIN32

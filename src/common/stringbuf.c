@@ -5,9 +5,9 @@
 #include <string.h>
 
 struct StringBuffer {
-	char *buff;		/*The backing char array*/
-	size_t size;	/*The size of the backing array*/
-	size_t len;		/*The length of the buffer*/
+	char *buff;  /*The backing char array*/
+	size_t size; /*The size of the backing array*/
+	size_t len;  /*The length of the buffer*/
 };
 static void sbuf_grow(StringBuffer *sbuf, size_t len);
 

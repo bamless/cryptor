@@ -18,11 +18,11 @@
 
 /**Struct that holds the arguments passed to the program*/
 typedef struct ParsedArgs {
-	const char *cmd;		 /*The command passed from arguments*/
+	const char *cmd;         /*The command passed from arguments*/
 	unsigned long host_addr; /*The server address*/
-	u_short host_port;		 /*The server port*/
-	unsigned int seed;		 /*The seed for the ENCR and DECR command*/
-	const char *path;		 /*The path for the ENCR and DECR command*/
+	u_short host_port;       /*The server port*/
+	unsigned int seed;       /*The seed for the ENCR and DECR command*/
+	const char *path;        /*The path for the ENCR and DECR command*/
 } ParsedArgs;
 
 /**Struct for passing arguments to the thread that handles ENCR and DECR commands*/

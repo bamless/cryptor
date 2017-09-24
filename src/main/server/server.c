@@ -18,10 +18,10 @@
 #define DEFAULT_THREADS 20
 
 typedef struct Config {
-	char *conf_file;	 /*The configuration file path*/
-	u_short port;		 /*The server port*/
-	char *pwd;			 /*The process working directory*/
-	int thread_count;	 /*The number of threads of the threadpool*/
+	char *conf_file;     /*The configuration file path*/
+	u_short port;        /*The server port*/
+	char *pwd;           /*The process working directory*/
+	int thread_count;    /*The number of threads of the threadpool*/
 } Config;
 
 /*Linux specific functions for reloading the confs on SIGHUP and for daemonizing*/
