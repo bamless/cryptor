@@ -33,6 +33,7 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
 		perr("Error mapping the file for encryption");
 		return -1;
 	}
+
 	//create and mmap the ciphertext file
 	File cipherfd;
 	if(create_cipher_file(out_name, size, &cipherfd)) {
@@ -49,25 +50,26 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
 		return -1;
 	}
 
-	//generates a new seed for every thread using the supplied seed
-	size_t key_len = ceil(size/(float) PAR_BLCK);
-	unsigned int *seeds = malloc(sizeof(unsigned int) * key_len);
-	for(size_t i = 0; i < key_len; i++) {
+	//the number of 256Kb chunks in the file
+	size_t num_chunks = ceil(size/(float) PAR_BLCK);
+
+	//generates a new seed for every thread (1 per chunk) using the supplied seed
+	unsigned int *seeds = malloc(sizeof(unsigned int) * num_chunks);
+	for(size_t i = 0; i < num_chunks; i++) {
 		seeds[i] = rand_r(&key_seed);
 	}
 
-	//the number of 256Kb chunks in the file
-	fsize_t num_chunks = ceil(size/((float) PAR_BLCK));
 	//finally encrypt the file
 	int result = 0;
 	#pragma omp parallel for
-	for(fsize_t n = 0; n < num_chunks; n++) {
+	for(size_t n = 0; n < num_chunks; n++) {
 		fsize_t from = n * PAR_BLCK;
 		fsize_t len = (from + PAR_BLCK) > size ? size - from : PAR_BLCK;
 
 		//map views of the size of the chunk
 		int *plain_chunk = mmap_mapview(plain, from, len);
 		int *cipher_chunk = mmap_mapview(cipher, from, len);
+
 		if(!cipher_chunk || !plain_chunk) {
 			perr("Error getting mapped file view");
 			#pragma omp atomic write
@@ -75,8 +77,8 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
 		}
 
 		//encrypt the bytes of the chunk in 4 bytes groups
-		fsize_t len32 = floor(len/(float) INT_LEN);
-		for(int i = 0; i < len32; i++) {
+		int len_int = floor(len/(float) INT_LEN);
+		for(int i = 0; i < len_int; i++) {
 			cipher_chunk[i] = plain_chunk[i] ^ rand_r(&seeds[n]);
 		}
 
@@ -84,13 +86,9 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
 		int remainder;
 		if((remainder = len % INT_LEN) != 0) {
 			int k = rand_r(&seeds[n]);
-
 			char *key_bytes = (char *) &k;
-			char *plain_bytes = (char *) plain_chunk;
-			char *cipher_bytes = (char *) cipher_chunk;
-
 			for(int i = len - remainder; i < len; i++) {
-				cipher_bytes[i] = plain_bytes[i] ^ key_bytes[i];
+				((char *) cipher_chunk)[i] = ((char *) plain_chunk)[i] ^ key_bytes[i];
 			}
 		}
 

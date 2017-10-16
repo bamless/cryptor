@@ -73,6 +73,7 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
 		if(strcmp(entry.name, ".") == 0 || strcmp(entry.name, "..") == 0) continue;
 
 		int orig_len = sbuf_get_len(path); //save the prev length of the path
+		
 		//append the entry name to obtain the full path
 		sbuf_appendstr(path, "/");
 		sbuf_appendstr(path, entry.name);
@@ -85,10 +86,11 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
 				continue;
 			}
 
-			sbuf_clear(cmdline); //empties the sbuf
+			sbuf_clear(cmdline);
 
+			//20 max size of 64 bit integer + 1 for NUL + 1 for space
+			char fsizestr[22];
 			//we can safely cast to uintmax_t because get_file_size guarantees a result >= 0
-			char fsizestr[22]; //20 max size of 64 bit integer + 1 for NUL + 1 for space
 			sprintf(fsizestr, "%"PRIu64" ", (uintmax_t) fsize);
 
 			//append the cmdline to the sbuf
@@ -116,39 +118,32 @@ static char* get_out_name(const char *name, int is_decrypt);
 static int strendswith(const char *str, const char *substr);
 
 static void handle_encrytion_commands(Socket client, int is_decrypt) {
-	char *path = NULL;
+	char *path = NULL, *out = NULL;
+	File file = NULL_FILE;
+	fsize_t s = 0;
+
 	unsigned int seed;
 	if(parse_encryption_cmdline(client, &seed, &path) || (is_decrypt && !strendswith(path, "_enc"))) {
 		send(client, RETERR, 3, MSG_NOSIGNAL);
-		free(path);
-		return;
+		goto error;
 	}
 
 	int err;
-	File file = open_file(path, READ | WRITE, &err); //WRITE is needed for acquiring an exclusive lock
+	file = open_file(path, READ | WRITE, &err); //WRITE is needed for acquiring an exclusive lock
 	if(err) {
-		char *errn = (err == ERR_NOFILE) ? RETERR : RETERRTRANS;
-		send(client, errn, 3, MSG_NOSIGNAL);
-		free(path);
-		return;
+		send(client, (err == ERR_NOFILE) ? RETERR : RETERRTRANS, 3, MSG_NOSIGNAL);
+		goto error;
 	}
 
-	fsize_t s;
 	if(fget_file_size(file, &s) || lock_file(file, 0, s)) {
 		send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
-		close_file(file);
-		free(path);
-		return;
+		goto error;
 	}
 
-	char *out = get_out_name(path, is_decrypt);
+	out = get_out_name(path, is_decrypt);
 	if(encrypt(file, out, seed)) {
 		send(client, RETERRTRANS, 3, MSG_NOSIGNAL);
-		unlock_file(file, 0, s);
-		close_file(file);
-		free(path);
-		free(out);
-		return;
+		goto error;
 	}
 
 	unlock_file(file, 0, s);
@@ -160,6 +155,13 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
 	free(out);
 
 	send(client, RETOK, 3, MSG_NOSIGNAL);
+	return;
+
+error:
+	unlock_file(file, 0, s);
+	close_file(file);
+	free(path);
+	free(out);
 }
 
 static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **path) {

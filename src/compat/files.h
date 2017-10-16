@@ -7,11 +7,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#define NULL_FILE -1
 typedef off_t fsize_t;	  /*fstat returns an off_t*/
+
 #elif _WIN32
 #include <inttypes.h>
 #include <windows.h>
+
+#define NULL_FILE INVALID_HANDLE_VALUE
 typedef uint64_t fsize_t; /*we use a fixed 64 bit int type on windows because GetFileSize returns 2 32-bit DWORD*/
+
 #endif
 
 /**
