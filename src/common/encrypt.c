@@ -9,6 +9,8 @@
 #include <math.h>
 #include <omp.h>
 
+#include <stdio.h>
+
 #define INT_LEN sizeof(int)   //int length in bytes
 #define PAR_BLCK (256 * 1024) //dimension, in bytes, of a thread unit of execution
 
@@ -58,7 +60,7 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
 	for(size_t i = 0; i < num_chunks; i++) {
 		seeds[i] = rand_r(&key_seed);
 	}
-
+	
 	//finally encrypt the file
 	int result = 0;
 	#pragma omp parallel for
@@ -86,9 +88,8 @@ int encrypt(File plainfd, const char *out_name, unsigned int key_seed) {
 		int remainder;
 		if((remainder = len % INT_LEN) != 0) {
 			int k = rand_r(&seeds[n]);
-			char *key_bytes = (char *) &k;
 			for(int i = len - remainder; i < len; i++) {
-				((char *) cipher_chunk)[i] = ((char *) plain_chunk)[i] ^ key_bytes[i];
+				((char *) cipher_chunk)[i] = ((char *) plain_chunk)[i] ^ ((char *) &k)[remainder - (len - i)];
 			}
 		}
 
