@@ -93,7 +93,6 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
 			char fsizestr[MAX_STRLEN_FOR_INT_TYPE(uintmax_t) + 2];
 			//we can safely cast to uintmax_t because get_file_size guarantees a result >= 0
 			sprintf(fsizestr, "%"PRIu64" ", (uintmax_t) fsize);
-			printf(fsizestr, "%"PRIu64" ", (uintmax_t) fsize);
 
 			//append the cmdline to the sbuf
 			sbuf_appendstr(cmdline, fsizestr);
