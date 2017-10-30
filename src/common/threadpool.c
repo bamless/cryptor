@@ -23,12 +23,12 @@ struct ThreadPool {
 	CondVar tasks_cond;             /*Condition var for signaling the thrads when a task is inserted*/
 };
 
-static void init_threads(ThreadPool *);
 static void worker_thread(void *, void *);
 
 ThreadPool* threadpool_create(int thread_count) {
 	ThreadPool *tp = malloc(sizeof(ThreadPool));
 	if(!tp) return NULL;
+
 	memset(tp, 0, sizeof(ThreadPool));
 	tp->thread_count = thread_count;
 	tp->threads = malloc(sizeof(Thread) * thread_count);
@@ -36,21 +36,18 @@ ThreadPool* threadpool_create(int thread_count) {
 		free(tp);
 		return NULL;
 	}
+
 	thread_init_cond(&tp->tasks_cond);
 	thread_init_mutex(&tp->tp_lock);
 
 	//start the worker threads
 	thread_lock_mutex(&tp->tp_lock);
-	init_threads(tp);
-	thread_unlock_mutex(&tp->tp_lock);
-
-	return tp;
-}
-
-static void init_threads(ThreadPool *tp) {
 	for(int i = 0; i < tp->thread_count; i++) {
 		thread_create(&tp->threads[i], &worker_thread, tp, NULL);
 	}
+	thread_unlock_mutex(&tp->tp_lock);
+
+	return tp;
 }
 
 void threadpool_destroy(ThreadPool *tp, enum ShutDownType type) {

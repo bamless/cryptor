@@ -169,7 +169,7 @@ static int strtoipandport(char *hostandport, unsigned long *ip, u_short *port) {
 }
 
 static void save_seed(unsigned int seed, const char *path) {
-	char seedstr[11];
+	char seedstr[MAX_STRLEN_FOR_INT_TYPE(unsigned int) + 1];
 	sprintf(seedstr, "%u", seed);
 	FILE *seeds = fopen(SEEDS_FILE, "a");
 	fprintf(seeds, "%s %s\n", seedstr, path);

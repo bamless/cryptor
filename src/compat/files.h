@@ -4,7 +4,6 @@
 /**Abstract the type of the file size*/
 #ifdef __unix
 #include <sys/types.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 

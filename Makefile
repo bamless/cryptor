@@ -43,7 +43,7 @@ INCLUDES_CLIENT = -I$(SRC_MAIN)/client
 #Linker flags
 LDFLAGS =
 # Compiler flags
-CFLAGS = -Wall -fopenmp
+CFLAGS = -Wall -Wvla -fopenmp
 # Libraries
 LIBS = -lm
 

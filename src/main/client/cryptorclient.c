@@ -15,13 +15,13 @@ static int read_response(Socket sock);
 
 int cryptor_send_command(Socket sock, const char *cmd, unsigned int seed, const char *path) {
 	if(strcmp(cmd, LSTF) == 0 || strcmp(cmd, LSTR) == 0) {
-		if(send(sock, cmd, 4, 0) < 0) {
+		if(send(sock, cmd, strlen(cmd), 0) < 0) {
 			perr_sock("Error send_command");
 			close_and_exit(sock);
 		}
 	} else if(strcmp(cmd, ENCR) == 0 || strcmp(cmd, DECR) == 0) {
 		StringBuffer *cmdline = sbuf_create();
-		char seedstr[11];
+		char seedstr[MAX_STRLEN_FOR_INT_TYPE(unsigned int) + 1];
 		snprintf(seedstr, sizeof(seedstr), "%u", seed);
 
 		sbuf_appendstr(cmdline, cmd);
@@ -78,8 +78,8 @@ void cryptor_print_more(Socket server) {
 		memcpy(last + (4 - shift), buff + bytes_recv - shift, shift);
 
 		if(strcmp(last, "\r\n\r\n") == 0) {
-			dlog("End of output");
-			break; //\r\n\r\n signals the end of the output as per protocol spec.
+			dlog("End of output"); //\r\n\r\n signals the end of the output as per protocol spec.
+			break;
 		}
 	}
 	if(bytes_recv < 0) perr_sock("Error");

@@ -63,7 +63,8 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
 	int err;
 	Dir *dir = open_dir(sbuf_get_backing_buf(path), &err);
 	if(!dir || err) {
-		perr("Error send_list: open_dir failed");
+		elogf("Error send_list: %s ", sbuf_get_backing_buf(path));
+		perr("open_dir failed");
 		return;
 	}
 
@@ -73,7 +74,7 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
 		if(strcmp(entry.name, ".") == 0 || strcmp(entry.name, "..") == 0) continue;
 
 		int orig_len = sbuf_get_len(path); //save the prev length of the path
-		
+
 		//append the entry name to obtain the full path
 		sbuf_appendstr(path, "/");
 		sbuf_appendstr(path, entry.name);
@@ -88,15 +89,16 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
 
 			sbuf_clear(cmdline);
 
-			//20 max size of 64 bit integer + 1 for NUL + 1 for space
-			char fsizestr[22];
+			//+2 for NUL and spaces
+			char fsizestr[MAX_STRLEN_FOR_INT_TYPE(uintmax_t) + 2];
 			//we can safely cast to uintmax_t because get_file_size guarantees a result >= 0
 			sprintf(fsizestr, "%"PRIu64" ", (uintmax_t) fsize);
+			printf(fsizestr, "%"PRIu64" ", (uintmax_t) fsize);
 
 			//append the cmdline to the sbuf
-			sbuf_appendstr(cmdline, fsizestr);					 //the size of the file
-			sbuf_appendstr(cmdline, sbuf_get_backing_buf(path)); //its path
-			sbuf_appendstr(cmdline, "\r\n");					 //carriage return and newline
+			sbuf_appendstr(cmdline, fsizestr);
+			sbuf_appendstr(cmdline, sbuf_get_backing_buf(path));
+			sbuf_appendstr(cmdline, "\r\n");
 
 			if(send(s, sbuf_get_backing_buf(cmdline), sbuf_get_len(cmdline), MSG_NOSIGNAL) < 0) {
 				sbuf_truncate(path, orig_len);
@@ -113,7 +115,8 @@ static void send_list(Socket s, StringBuffer *path, StringBuffer *cmdline, int i
 	close_dir(dir);
 }
 
-static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **path);
+static void receive_command_line(Socket client, StringBuffer *sb) ;
+static int parse_encryption_cmdline(StringBuffer *client, unsigned int *seed, char **path);
 static char* get_out_name(const char *name, int is_decrypt);
 static int strendswith(const char *str, const char *substr);
 
@@ -122,8 +125,12 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
 	File file = NULL_FILE;
 	fsize_t s = 0;
 
+	//receive command line from client
+	StringBuffer *cmdline = sbuf_create();
+	receive_command_line(client, cmdline);
+
 	unsigned int seed;
-	if(parse_encryption_cmdline(client, &seed, &path) || (is_decrypt && !strendswith(path, "_enc"))) {
+	if(parse_encryption_cmdline(cmdline, &seed, &path) || (is_decrypt && !strendswith(path, "_enc"))) {
 		send(client, RETERR, 3, MSG_NOSIGNAL);
 		goto error;
 	}
@@ -146,34 +153,30 @@ static void handle_encrytion_commands(Socket client, int is_decrypt) {
 		goto error;
 	}
 
-	unlock_file(file, 0, s);
-	close_file(file);
-
-	if(delete_file(path)) perr("Error deleting plaintext file");
-
-	free(path);
-	free(out);
+	if(delete_file(path))
+		perr("Error deleting plaintext file");
 
 	send(client, RETOK, 3, MSG_NOSIGNAL);
-	return;
 
 error:
+	sbuf_destroy(cmdline);
 	unlock_file(file, 0, s);
 	close_file(file);
 	free(path);
 	free(out);
 }
 
-static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **path) {
-	StringBuffer *cmdline = sbuf_create();
-	char buff[512];
+static void receive_command_line(Socket client, StringBuffer *sb) {
+	char buff[1024];
 	ssize_t bytes_recv;
 	while((bytes_recv = recv(client, buff, sizeof(buff), 0)) > 0) {
-		sbuf_append(cmdline, buff, bytes_recv);
-		if(sbuf_endswith(cmdline, "\r\n")) break; //\r\n signals end of encr/decr command lines
+		sbuf_append(sb, buff, bytes_recv);
+		if(sbuf_endswith(sb, "\r\n")) break; //\r\n signals end of encr/decr command lines
 	}
 	if(bytes_recv < 0) perr_sock("Error");
+}
 
+static int parse_encryption_cmdline(StringBuffer *cmdline, unsigned int *seed, char **path) {
 	sbuf_truncate(cmdline, sbuf_get_len(cmdline) - 2); //remove the \r\n
 	size_t cmdline_len = sbuf_get_len(cmdline);
 
@@ -182,7 +185,6 @@ static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **pa
 
 	unsigned long seedl = strtoul(seed_str, &err, 10);
 	if(seedl > UINT_MAX || *err) {
-		sbuf_destroy(cmdline);
 		return - 1;
 	}
 	*seed = (unsigned int) seedl;
@@ -197,7 +199,6 @@ static int parse_encryption_cmdline(Socket client, unsigned int *seed, char **pa
 	}
 
 	dlogf("file: %s\n", *path);
-	sbuf_destroy(cmdline);
 	return 0;
 }
 
