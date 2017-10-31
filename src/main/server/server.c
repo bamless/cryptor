@@ -120,35 +120,35 @@ static void parse_args_and_cfg(int argc, char **argv, Config *cfg) {
 	opterr = 0;
 	while((c = getopt(argc, argv, ":c:n:p:f:")) != -1) {
 		switch(c) {
-			case 'c':
-				cfg->pwd = strdup(optarg); //we may need to modify the string later, so strdup it
-				break;
-			case 'p':
-				cfg->port = parse_port(optarg);
-				if(cfg->port == 0) usage(argv[0]);
-				break;
-			case 'n':
-				cfg->thread_count = parse_numthreads(optarg);
-				if(cfg->thread_count == 0) usage(argv[0]);
-				break;
-			case 'f':
-				cfg->conf_file = get_abs(optarg); //retrieve the absolute path of the config file
-				if(!cfg->conf_file) {
-					perr("Config file");
-					usage(argv[0]);
-				}
-				break;
-			case '?':
-				if(isprint(optopt))
-					elogf("Unknown option `-%c`.\n", optopt);
-				else
-					elogf("Unknown option character `\\x%x`.\n", optopt);
+		case 'c':
+			cfg->pwd = strdup(optarg); //we may need to modify the string later, so strdup it
+			break;
+		case 'p':
+			cfg->port = parse_port(optarg);
+			if(cfg->port == 0) usage(argv[0]);
+			break;
+		case 'n':
+			cfg->thread_count = parse_numthreads(optarg);
+			if(cfg->thread_count == 0) usage(argv[0]);
+			break;
+		case 'f':
+			cfg->conf_file = get_abs(optarg); //retrieve the absolute path of the config file
+			if(!cfg->conf_file) {
+				perr("Config file");
 				usage(argv[0]);
-				break;
-			case ':':
-				elogf("No argument to `-%c`.\n", optopt);
-				usage(argv[0]);
-				break;
+			}
+			break;
+		case '?':
+			if(isprint(optopt))
+				elogf("Unknown option `-%c`.\n", optopt);
+			else
+				elogf("Unknown option character `\\x%x`.\n", optopt);
+			usage(argv[0]);
+			break;
+		case ':':
+			elogf("No argument to `-%c`.\n", optopt);
+			usage(argv[0]);
+			break;
 		}
 	}
 	if(cfg->conf_file != NULL)
@@ -171,6 +171,7 @@ static void read_cfg_file(Config *cfg) {
 
 		char *conf = strtok(line, " ");
 		char *confarg = strtok(NULL, " ");
+
 		if(confarg == NULL) {
 			elogf("Argument missing for option `%s` of config file\n", conf);
 			continue;
@@ -178,16 +179,10 @@ static void read_cfg_file(Config *cfg) {
 
 		if(strcmp(conf, "threads") == 0) {
 			cfg->thread_count = parse_numthreads(confarg);
-			if(cfg->thread_count == 0) {
-				elog("Option `threads` of conf file is malformed.");
-				continue;
-			}
+			if(cfg->thread_count == 0) elog("Option `threads` of conf file is malformed.");
 		} else if(strcmp(conf, "port") == 0) {
 			cfg->port = parse_port(confarg);
-			if(cfg->port == 0) {
-				elog("Option `port` of conf file is malformed.");
-				continue;
-			}
+			if(cfg->port == 0) elog("Option `port` of conf file is malformed.");
 		} else if(strcmp(conf, "directory") == 0) {
 			free(cfg->pwd);
 

@@ -80,6 +80,7 @@ static void send_thread_command(void *args, void *retval) {
 
 static void parse_args(int argc, char **argv, ParsedArgs *args) {
 	if(argc < 3) usage(argv[0]);
+	memset(args, 0, sizeof(*args));
 
 	//get the ip addr and the port
 	if(strtoipandport(argv[argc - 1], &args->host_addr, &args->host_port)) {
@@ -89,35 +90,33 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 
 	//get the options
 	int c;
-	args->cmd = NULL;
-	args->seed = 0;
 	opterr = 0;
 	switch ((c = getopt(argc, argv, "lRed"))) {
-		case 'l':
-		case 'R':
-			if(argc != 3) usage(argv[0]);
-			args->cmd = c == 'l' ? LSTF : LSTR; //the command
-			break;
-		case 'e':
-		case 'd': {
-			if(argc != 5) usage(argv[0]);
-			args->cmd = c == 'e' ? ENCR : DECR; //the command
-			//convert the 'seed' argument
-			char *err;
-			unsigned long seed = strtol(argv[optind], &err, 10);
-			if(*err != '\0' || seed > UINT_MAX) usage(argv[0]);
-			args->seed = (unsigned int) seed;
-			//sets the 'path' argument
-			args->path = argv[optind + 1];
-			break;
-		}
-		case '?':
-			if(isprint(optopt))
-				elogf("Unknown option `-%c`.\n", optopt);
-			else
-				elogf("Unknown option character `\\x%x`.\n", optopt);
-			usage(argv[0]);
-			break;
+	case 'l':
+	case 'R':
+		if(argc != 3) usage(argv[0]);
+		args->cmd = c == 'l' ? LSTF : LSTR; //the command
+		break;
+	case 'e':
+	case 'd': {
+		if(argc != 5) usage(argv[0]);
+		args->cmd = c == 'e' ? ENCR : DECR; //the command
+		//convert the 'seed' argument
+		char *err;
+		unsigned long seed = strtol(argv[optind], &err, 10);
+		if(*err != '\0' || seed > UINT_MAX) usage(argv[0]);
+		args->seed = (unsigned int) seed;
+		//sets the 'path' argument
+		args->path = argv[optind + 1];
+		break;
+	}
+	case '?':
+		if(isprint(optopt))
+			elogf("Unknown option `-%c`.\n", optopt);
+		else
+			elogf("Unknown option character `\\x%x`.\n", optopt);
+		usage(argv[0]);
+		break;
 	}
 	if(args->cmd == NULL) {
 		elog("Process directory option missing.");
