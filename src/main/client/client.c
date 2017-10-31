@@ -85,7 +85,7 @@ static void parse_args(int argc, char **argv, ParsedArgs *args) {
 	if(strtoipandport(argv[argc - 1], &args->host_addr, &args->host_port)) {
 		usage(argv[0]);
 	}
-	if(args->host_port == 0) args->host_port = htons(DEFAULT_PORT);
+	if(args->host_port == 0) args->host_port = htons(CRYPTOR_DEFAULT_PORT);
 
 	//get the options
 	int c;

@@ -54,7 +54,7 @@ void cryptor_read_more(Socket server, StringBuffer *sb) {
 		sbuf_append(sb, buff, bytes_recv);
 		if(sbuf_endswith(sb, "\r\n\r\n")) break; //\r\n\r\n signals the end of the output as per protocol spec.
 	}
-	if(bytes_recv <= 0) perr_sock("Error");
+	if(bytes_recv < 0) perr_sock("Error");
 }
 
 /*
@@ -87,11 +87,12 @@ void cryptor_print_more(Socket server) {
 
 static int read_response(Socket sock) {
 	//read response code
-	char resp[4];
+	char resp[CRYPTOR_MAX_B10_RETCODE_STRLEN + 1];
+	
 	int received;
 	memset(resp, '\0', sizeof(resp));
 
-	if((received = recv(sock, resp, sizeof(resp) - 1, MSG_WAITALL)) == -1) {
+	if((received = recv(sock, resp, sizeof(resp) - 1, MSG_WAITALL)) < 0) {
 		perr_sock("Error read_response");
 		close_and_exit(sock);
 	}

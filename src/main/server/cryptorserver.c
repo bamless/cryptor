@@ -18,7 +18,7 @@ static void handle_list_commands(Socket client, int is_recursive);
 static void handle_encrytion_commands(Socket client, int is_decrypt);
 
 void cryptor_handle_connection(Socket client) {
-	char cmd[5];
+	char cmd[CRYPTOR_MAX_CMD_STRLEN + 1];
 	memset(cmd, '\0', sizeof(cmd));
 	recv(client, cmd, sizeof(cmd) - 1, MSG_WAITALL);
 
@@ -33,6 +33,7 @@ void cryptor_handle_connection(Socket client) {
 	} else if(strcmp(cmd, DECR) == 0) {
 		handle_encrytion_commands(client, 1);
 	} else {
+		elogf("Received unknown command %s\n", cmd);
 		send(client, RETERR, 3, MSG_NOSIGNAL);
 	}
 
@@ -172,15 +173,21 @@ static void receive_command_line(Socket client, StringBuffer *sb) {
 		sbuf_append(sb, buff, bytes_recv);
 		if(sbuf_endswith(sb, "\r\n")) break; //\r\n signals end of encr/decr command lines
 	}
-	if(bytes_recv < 0) perr_sock("Error");
+	if(bytes_recv == 0) elog("Received incomplete command line from client");
+	if(bytes_recv <  0) perr_sock("Error");
 }
 
 static int parse_encryption_cmdline(StringBuffer *cmdline, unsigned int *seed, char **path) {
+	if(sbuf_get_len(cmdline) < 3 || !sbuf_endswith(cmdline, "\r\n"))
+		return -1;
+
 	sbuf_truncate(cmdline, sbuf_get_len(cmdline) - 2); //remove the \r\n
 	size_t cmdline_len = sbuf_get_len(cmdline);
 
+	//get and parse the seed
 	char *saveptr, *err;
 	char *seed_str = strtok_r(sbuf_get_backing_buf(cmdline), " ", &saveptr);
+	if(seed_str == NULL) return -1;
 
 	unsigned long seedl = strtoul(seed_str, &err, 10);
 	if(seedl > UINT_MAX || *err) {
@@ -189,15 +196,20 @@ static int parse_encryption_cmdline(StringBuffer *cmdline, unsigned int *seed, c
 	*seed = (unsigned int) seedl;
 	dlogf("seed: %d\n", *seed);
 
-	char *tok;
+	//get and parse the file path
 	*path = malloc(cmdline_len - (strlen(seed_str) + 1) + 1);
-	strcpy(*path, strtok_r(NULL, " ", &saveptr));
+
+	char *tok = strtok_r(NULL, " ", &saveptr);
+	if(tok == NULL) return -1;
+
+	//if the path contains spaces we need to get the rest of it
+	strcpy(*path, tok);
 	while((tok = strtok_r(NULL, " ", &saveptr))) {
 		strcat(*path, " ");
 		strcat(*path, tok);
 	}
-
 	dlogf("file: %s\n", *path);
+
 	return 0;
 }
 

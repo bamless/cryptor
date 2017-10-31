@@ -100,7 +100,7 @@ static void threadpool_handle_connection(void *incoming_conn) {
 }
 
 static void init_config(Config *cfg) {
-	cfg->port = DEFAULT_PORT;
+	cfg->port = CRYPTOR_DEFAULT_PORT;
 	cfg->thread_count = DEFAULT_THREADS;
 	cfg->conf_file = NULL;
 	cfg->pwd = NULL; //this is a mandatory arg, so we don't need a default value

@@ -13,6 +13,8 @@
 #define ENCR "ENCR"
 #define DECR "DECR"
 
+#define CRYPTOR_MAX_CMD_STRLEN 4
+
 #define RETOK_INT 200
 #define RETMORE_INT 300
 #define RETERR_INT 400
@@ -22,7 +24,9 @@
 #define RETERR "400"
 #define RETERRTRANS "500"
 
-#define DEFAULT_PORT 8888 //the server default port
+#define CRYPTOR_MAX_B10_RETCODE_STRLEN 3
+
+#define CRYPTOR_DEFAULT_PORT 8888 //the server default port
 
 /**
  * Calculate the approximate maximum base 10 length of the given integer type.
